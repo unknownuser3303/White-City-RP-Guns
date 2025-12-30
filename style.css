@@ -79,3 +79,22 @@ margin-top: 20px;
   margin: 15px;
   font-size: 18px;
 }
+#multiRandom {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px;
+}
+
+#randomCount {
+  width: 60px;
+  padding: 5px;
+  text-align: center;
+}
+
+#multiRandomResult {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 20px;
+}
