@@ -1,0 +1,20 @@
+[
+{
+"name": "Glock 19",
+"tier": "A",
+"damage": 35,
+"fireRate": "Medium"
+},
+{
+"name": "Desert Eagle",
+"tier": "S",
+"damage": 75,
+"fireRate": "Low"
+},
+{
+"name": "AK-47",
+"tier": "S",
+"damage": 55,
+"fireRate": "High"
+}
+]
