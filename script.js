@@ -40,7 +40,7 @@ const randomBtn = document.getElementById('randomBtn');
 const randomResult = document.getElementById('randomResult');
 
 randomBtn.addEventListener('click', () => {
-  if (allWeapons.length === 0) return;
+  if (allWeapons.length === 0) return; // <-- if empty, nothing happens
 
   const randomIndex = Math.floor(Math.random() * allWeapons.length);
   const weapon = allWeapons[randomIndex];
