@@ -36,6 +36,23 @@ w.name.toLowerCase().includes(value)
 );
 renderWeapons(filtered);
 });
+const randomBtn = document.getElementById('randomBtn');
+const randomResult = document.getElementById('randomResult');
+
+randomBtn.addEventListener('click', () => {
+  if (allWeapons.length === 0) return;
+
+  const randomIndex = Math.floor(Math.random() * allWeapons.length);
+  const weapon = allWeapons[randomIndex];
+
+  randomResult.innerHTML = `
+    <strong>Random Weapon:</strong><br>
+    ${weapon.name}<br>
+    Tier: ${weapon.tier}<br>
+    Damage: ${weapon.damage}<br>
+    Fire Rate: ${weapon.fireRate}
+  `;
+});
 
 
 
