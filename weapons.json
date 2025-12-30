@@ -1,4 +1,3 @@
-
   { "name": "1911", "tier": "A", "damage": 50, "fireRate": "Low" },
   { "name": "Canik TP9", "tier": "A", "damage": 40, "fireRate": "Medium" },
   { "name": "Glock 45", "tier": "A", "damage": 38, "fireRate": "Medium" },
