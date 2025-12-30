@@ -1,12 +1,12 @@
 let allWeapons = [];
 
-
 fetch('weapons.json')
-.then(res => res.json())
-.then(data => {
-allWeapons = data;
-renderWeapons(data);
-});
+  .then(res => res.json())
+  .then(data => {
+    allWeapons = data; // <-- this line is critical
+    renderWeapons(data);
+  });
+
 
 
 function renderWeapons(weapons) {
