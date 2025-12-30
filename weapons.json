@@ -1,20 +1,28 @@
-[
-{
-"name": "Glock 19",
-"tier": "A",
-"damage": 35,
-"fireRate": "Medium"
-},
-{
-"name": "Desert Eagle",
-"tier": "S",
-"damage": 75,
-"fireRate": "Low"
-},
-{
-"name": "AK-47",
-"tier": "S",
-"damage": 55,
-"fireRate": "High"
-}
+
+  { "name": "1911", "tier": "A", "damage": 50, "fireRate": "Low" },
+  { "name": "Canik TP9", "tier": "A", "damage": 40, "fireRate": "Medium" },
+  { "name": "Glock 45", "tier": "A", "damage": 38, "fireRate": "Medium" },
+  { "name": "Glock 19X", "tier": "A", "damage": 38, "fireRate": "Medium" },
+  { "name": "FN 5.7", "tier": "S", "damage": 45, "fireRate": "High" },
+  { "name": "Glock 17 Gen 5", "tier": "A", "damage": 36, "fireRate": "Medium" },
+  { "name": "Glock 19", "tier": "A", "damage": 36, "fireRate": "Medium" },
+  { "name": "Glock 43", "tier": "B", "damage": 32, "fireRate": "Low" },
+  { "name": "Glock 23", "tier": "A", "damage": 40, "fireRate": "Medium" },
+  { "name": "HK45", "tier": "A", "damage": 48, "fireRate": "Low" },
+  { "name": "Olive Glock 17", "tier": "A", "damage": 36, "fireRate": "Medium" },
+  { "name": "Olive Glock 19X", "tier": "A", "damage": 38, "fireRate": "Medium" },
+  { "name": "Walther P88", "tier": "B", "damage": 34, "fireRate": "Medium" },
+  { "name": "Sig P320", "tier": "A", "damage": 40, "fireRate": "Medium" },
+  { "name": "Glock 19 Switch", "tier": "S", "damage": 55, "fireRate": "Very High" },
+  { "name": "Glock 43 MOS", "tier": "B", "damage": 32, "fireRate": "Low" },
+  { "name": "Glock 45 MOS", "tier": "A", "damage": 38, "fireRate": "Medium" },
+  { "name": "ARP Binary", "tier": "S", "damage": 60, "fireRate": "Very High" },
+  { "name": "Olive Draco", "tier": "S", "damage": 70, "fireRate": "High" },
+  { "name": "Draco", "tier": "S", "damage": 70, "fireRate": "High" },
+  { "name": "FNX 45", "tier": "A", "damage": 50, "fireRate": "Low" },
+  { "name": "G26 Switch", "tier": "S", "damage": 55, "fireRate": "Very High" },
+  { "name": "G20 Switch", "tier": "S", "damage": 65, "fireRate": "Very High" },
+  { "name": "Kriss Vector", "tier": "S", "damage": 58, "fireRate": "Very High" },
+  { "name": "MAC-10", "tier": "S", "damage": 50, "fireRate": "Very High" },
+  { "name": "Sig MCX", "tier": "S", "damage": 62, "fireRate": "High" }
 ]
