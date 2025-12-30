@@ -1,14 +1,11 @@
 let allWeapons = [];
 
-fetch('weapons.json')
+ffetch('weapons.json?' + new Date().getTime())
   .then(res => res.json())
   .then(data => {
-    allWeapons = data; // <-- this line is critical
+    allWeapons = data;
     renderWeapons(data);
   });
-
-
-
 function renderWeapons(weapons) {
 const container = document.getElementById('weapons');
 container.innerHTML = '';
@@ -26,8 +23,6 @@ card.innerHTML = `
 container.appendChild(card);
 });
 }
-
-
 const search = document.getElementById('search');
 search.addEventListener('input', e => {
 const value = e.target.value.toLowerCase();
