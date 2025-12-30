@@ -11,7 +11,7 @@ function loadWeapons() {
     .catch(err => console.error('Error loading weapons.json:', err));
 }
 
-// Render full list
+// Render weapon cards
 function renderWeapons(weapons) {
   const container = document.getElementById('weapons');
   container.innerHTML = '';
@@ -69,7 +69,7 @@ multiRandomBtn.addEventListener('click', () => {
   });
 });
 
-// Search
+// Search filter
 const search = document.getElementById('search');
 search.addEventListener('input', e => {
   const filtered = allWeapons.filter(w =>
@@ -78,5 +78,5 @@ search.addEventListener('input', e => {
   renderWeapons(filtered);
 });
 
-// Initial load
+// Load weapons on page load
 loadWeapons();
