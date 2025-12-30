@@ -1,0 +1,60 @@
+body {
+font-family: Arial, sans-serif;
+background: #0f0f0f;
+color: #fff;
+margin: 0;
+padding: 0;
+}
+
+
+header {
+text-align: center;
+padding: 20px;
+background: #1a1a1a;
+}
+
+
+#search {
+display: block;
+margin: 20px auto;
+padding: 10px;
+width: 80%;
+max-width: 400px;
+border-radius: 5px;
+border: none;
+}
+
+
+.weapon-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+gap: 15px;
+padding: 20px;
+}
+
+
+.weapon-card {
+background: #1f1f1f;
+padding: 15px;
+border-radius: 8px;
+border: 1px solid #333;
+}
+
+
+.weapon-card h3 {
+margin: 0 0 10px;
+}
+
+
+.weapon-card span {
+font-size: 14px;
+color: #aaa;
+}
+
+
+footer {
+text-align: center;
+padding: 15px;
+background: #1a1a1a;
+margin-top: 20px;
+}
