@@ -1,64 +1,49 @@
 body {
-font-family: Arial, sans-serif;
-background: #0f0f0f;
-color: #fff;
-margin: 0;
-padding: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+  margin: 0;
+  padding: 0;
 }
-
 
 header {
-text-align: center;
-padding: 20px;
-background: #1a1a1a;
+  text-align: center;
+  padding: 20px;
+  background: #1a1a1a;
 }
-
 
 #search {
-display: block;
-margin: 20px auto;
-padding: 10px;
-width: 80%;
-max-width: 400px;
-border-radius: 5px;
-border: none;
+  display: block;
+  margin: 20px auto;
+  padding: 10px;
+  width: 80%;
+  max-width: 400px;
+  border-radius: 5px;
+  border: none;
 }
-
 
 .weapon-grid {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-gap: 15px;
-padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  padding: 20px;
 }
-
 
 .weapon-card {
-background: #1f1f1f;
-padding: 15px;
-border-radius: 8px;
-border: 1px solid #333;
+  background: #1f1f1f;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  text-align: center;
+  color: white;
 }
 
+.weapon-card.tier-S { border-left: 5px solid #2ecc71; } /* green */
+.weapon-card.tier-A { border-left: 5px solid #3498db; } /* blue */
+.weapon-card.tier-B { border-left: 5px solid #9b59b6; } /* purple */
+.weapon-card.tier-F { border-left: 5px solid #f1c40f; } /* gold */
 
-.weapon-card h3 {
-margin: 0 0 10px;
-}
-
-
-.weapon-card span {
-font-size: 14px;
-color: #aaa;
-}
-
-
-footer {
-text-align: center;
-padding: 15px;
-background: #1a1a1a;
-margin-top: 20px;
-}
-#randomBtn {
+#randomBtn, #multiRandomBtn {
   display: block;
   margin: 10px auto;
   padding: 10px 20px;
@@ -70,7 +55,7 @@ margin-top: 20px;
   cursor: pointer;
 }
 
-#randomBtn:hover {
+#randomBtn:hover, #multiRandomBtn:hover {
   background: #666;
 }
 
@@ -79,6 +64,7 @@ margin-top: 20px;
   margin: 15px;
   font-size: 18px;
 }
+
 #multiRandom {
   display: flex;
   justify-content: center;
@@ -97,4 +83,11 @@ margin-top: 20px;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   padding: 20px;
+}
+
+footer {
+  text-align: center;
+  padding: 15px;
+  background: #1a1a1a;
+  margin-top: 20px;
 }
