@@ -36,25 +36,6 @@ w.name.toLowerCase().includes(value)
 );
 renderWeapons(filtered);
 });
-#randomBtn {
-  display: block;
-  margin: 10px auto;
-  padding: 10px 20px;
-  font-size: 16px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
 
-#randomBtn:hover {
-  background: #666;
-}
 
-#randomResult {
-  text-align: center;
-  margin: 15px;
-  font-size: 18px;
-}
 
