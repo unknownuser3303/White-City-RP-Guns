@@ -53,6 +53,34 @@ randomBtn.addEventListener('click', () => {
     Fire Rate: ${weapon.fireRate}
   `;
 });
+const multiRandomBtn = document.getElementById('multiRandomBtn');
+const randomCountInput = document.getElementById('randomCount');
+const multiRandomResult = document.getElementById('multiRandomResult');
+
+multiRandomBtn.addEventListener('click', () => {
+  if (allWeapons.length === 0) return;
+
+  let count = parseInt(randomCountInput.value);
+  count = Math.min(count, allWeapons.length);
+
+  // Copy array so we don’t modify original
+  const shuffled = [...allWeapons].sort(() => 0.5 - Math.random());
+  const selected = shuffled.slice(0, count);
+
+  multiRandomResult.innerHTML = '';
+
+  selected.forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'weapon-card';
+    div.innerHTML = `
+      <h3>${w.name}</h3>
+      <span>Tier: ${w.tier}</span><br>
+      <span>Damage: ${w.damage}</span><br>
+      <span>Fire Rate: ${w.fireRate}</span>
+    `;
+    multiRandomResult.appendChild(div);
+  });
+});
 
 
 
