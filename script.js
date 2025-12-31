@@ -44,17 +44,17 @@ function renderWeapons(weapons) {
   const container = document.getElementById("weapons");
   if (!container) return;
   container.innerHTML = "";
-  weapons.forEach((w) => container.appendChild(makeCard(w)));
+  weapons.forEach(w => container.appendChild(makeCard(w)));
 }
 
 function renderDrop(drop) {
   const container = document.getElementById("dropResult");
   if (!container) return;
   container.innerHTML = "";
-  drop.forEach((w) => container.appendChild(makeCard(w)));
+  drop.forEach(w => container.appendChild(makeCard(w)));
 }
 
-// Pick unique items with weights (higher weight = more likely)
+// Weighted unique selection
 function weightedPickUnique(items, count, weightFn) {
   const picked = [];
   const pool = [...items];
@@ -72,7 +72,7 @@ function weightedPickUnique(items, count, weightFn) {
     }
 
     picked.push(pool[idx]);
-    pool.splice(idx, 1); // remove to keep unique
+    pool.splice(idx, 1);
   }
 
   return picked;
@@ -85,23 +85,24 @@ function getTierDrop(tierName) {
 
   switch (tierName) {
     case "Test Drops":
-      pool = allWeapons.filter((w) => w.tier === "S" || w.tier === "A");
+      pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
       count = 2;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Tier 1":
-      // Tier 1: S/A/B, but B is low luck AND MGlock19 is boosted
-      pool = allWeapons.filter((w) => ["S", "A", "B"].includes(w.tier));
+      // Tier 1: S/A/B
+      // Boost Glock19 Foregrip
+      pool = allWeapons.filter(w => ["S", "A", "B"].includes(w.tier));
       count = 4;
 
       return weightedPickUnique(pool, count, (w) => {
-        if (w.name === "MGlock19") return 6; // BOOST MGlock19 (raise to 8/10 if you want more)
-        if (w.tier === "B") return 0.6;      // LOW LUCK B
-        return 1;                             // normal
+        if (w.name === "Glock19 Foregrip") return 6; // 🔥 BOOST
+        if (w.tier === "B") return 0.6;              // low luck B
+        return 1;
       });
 
     case "Tier 1.5":
-      pool = allWeapons.filter((w) => ["F", "B"].includes(w.tier));
+      pool = allWeapons.filter(w => ["F", "B"].includes(w.tier));
       count = 4;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
@@ -117,80 +118,68 @@ function getTierDrop(tierName) {
 
     default:
       pool = [...allWeapons];
-      count = 1;
-      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, 1);
   }
 }
 
-// ===== REAL CSGO STYLE SPIN =====
-// Lands on first item in the drop under the center marker line
+// ===== CSGO STYLE SPIN =====
 function playCsgoSpin(finalDrop) {
   const track = document.getElementById("spinTrack");
   const wrapper = document.querySelector(".spin-area");
 
-  // If spin area missing, just show results
   if (!track || !wrapper) {
     renderDrop(finalDrop);
     return;
   }
 
   const winner = finalDrop[0];
-
   const preCount = 40;
   const postCount = 10;
 
   const pre = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, preCount);
   const post = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, postCount);
-
   const roll = [...pre, winner, ...post];
 
   track.innerHTML = "";
-  roll.forEach((w) => track.appendChild(makeCard(w)));
+  roll.forEach(w => track.appendChild(makeCard(w)));
 
-  // Reset
   track.style.transition = "none";
   track.style.transform = "translateX(0)";
   track.offsetHeight;
 
   const cards = track.querySelectorAll(".weapon-card");
-  const winnerIndex = preCount;
-  const winnerCard = cards[winnerIndex];
+  const winnerCard = cards[preCount];
 
   const centerOffset = (wrapper.clientWidth / 2) - (winnerCard.clientWidth / 2);
   const winnerLeft = winnerCard.offsetLeft;
 
   let target = winnerLeft - centerOffset;
-
-  // Small jitter so it feels more natural
-  const jitter = Math.floor(Math.random() * 40) - 20; // -20..+19
-  target = Math.max(0, target + jitter);
+  target += Math.floor(Math.random() * 40) - 20;
+  target = Math.max(0, target);
 
   track.style.transition = "transform 4.2s cubic-bezier(.08,.85,.12,1)";
   track.style.transform = `translateX(-${target}px)`;
 
-  // Reveal full drop after spin finishes
-  setTimeout(() => {
-    renderDrop(finalDrop);
-  }, 4300);
+  setTimeout(() => renderDrop(finalDrop), 4300);
 }
 
-// ----- Load weapons.json (cache bust) -----
+// ----- Load weapons -----
 function loadWeapons() {
   setStatus("Loading weapons...");
   fetch("weapons.json?" + Date.now())
-    .then((res) => res.json())
-    .then((data) => {
+    .then(res => res.json())
+    .then(data => {
       allWeapons = data;
       renderWeapons(allWeapons);
       setStatus(`Loaded ${allWeapons.length} weapons.`);
     })
-    .catch((err) => {
+    .catch(err => {
       console.error(err);
-      setStatus("Failed to load weapons.json (check JSON).");
+      setStatus("Failed to load weapons.json.");
     });
 }
 
-// ----- UI wiring -----
+// ----- UI -----
 function wireUI() {
   const btn = document.getElementById("randomizeBtn");
   const tierSelect = document.getElementById("tierSelect");
@@ -198,26 +187,18 @@ function wireUI() {
 
   if (btn && tierSelect) {
     btn.addEventListener("click", () => {
-      if (!allWeapons.length) {
-        setStatus("Weapons not loaded yet.");
-        return;
-      }
-
+      if (!allWeapons.length) return;
       const tier = tierSelect.value;
       const drop = getTierDrop(tier);
-
       playCsgoSpin(drop);
       setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
     });
   }
 
   if (search) {
-    search.addEventListener("input", (e) => {
+    search.addEventListener("input", e => {
       const q = e.target.value.toLowerCase();
-      const filtered = allWeapons.filter((w) =>
-        w.name.toLowerCase().includes(q)
-      );
-      renderWeapons(filtered);
+      renderWeapons(allWeapons.filter(w => w.name.toLowerCase().includes(q)));
     });
   }
 }
