@@ -1,93 +1,177 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #0f0f0f;
-  color: #fff;
-  margin: 0;
-  padding: 0;
+:root{
+  --bg:#0b0b0f;
+  --panel:#12121a;
+  --panel2:#0f0f16;
+  --text:#ffffff;
+  --muted:#b7b7c7;
+  --line:#2a2a3a;
+
+  /* Tier colors */
+  --S:#2ecc71; /* green */
+  --A:#3498db; /* blue */
+  --B:#9b59b6; /* purple */
+  --F:#f1c40f; /* gold */
 }
 
-header {
-  text-align: center;
-  padding: 20px;
-  background: #1a1a1a;
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(circle at top, #121224, var(--bg));
+  color:var(--text);
 }
 
-#search {
-  display: block;
-  margin: 20px auto;
-  padding: 10px;
-  width: 80%;
-  max-width: 400px;
-  border-radius: 5px;
-  border: none;
+.site-header{
+  text-align:center;
+  padding:22px 12px;
+  background: linear-gradient(180deg, #141428, #0e0e16);
+  border-bottom: 1px solid var(--line);
 }
 
-.weapon-grid {
+.site-header h1{
+  margin:0;
+  letter-spacing: 1px;
+}
+
+.site-header p{
+  margin:8px 0 0;
+  color:var(--muted);
+}
+
+.wrap{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 14px 40px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-  padding: 20px;
+  gap: 16px;
 }
 
-.weapon-card {
-  background: #1f1f1f;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid #333;
-  text-align: center;
-  color: white;
+.panel{
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
 }
 
-.weapon-card.tier-S { border-left: 5px solid #2ecc71; } /* green */
-.weapon-card.tier-A { border-left: 5px solid #3498db; } /* blue */
-.weapon-card.tier-B { border-left: 5px solid #9b59b6; } /* purple */
-.weapon-card.tier-F { border-left: 5px solid #f1c40f; } /* gold */
-
-#randomBtn, #multiRandomBtn {
-  display: block;
-  margin: 10px auto;
-  padding: 10px 20px;
-  font-size: 16px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+.panel-title{
+  margin: 0 0 12px;
+  font-size: 20px;
 }
 
-#randomBtn:hover, #multiRandomBtn:hover {
-  background: #666;
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  padding: 8px 0 10px;
 }
 
-#randomResult {
-  text-align: center;
-  margin: 15px;
+label{ color:var(--muted); }
+
+select{
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background:#0f0f16;
+  color:var(--text);
+}
+
+button{
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background:#1c1c2a;
+  color:var(--text);
+  cursor:pointer;
+}
+
+button:hover{
+  background:#26263a;
+}
+
+.drops-title{
+  text-align:center;
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.status{
+  text-align:center;
+  margin-top: 10px;
+  color: var(--muted);
+  min-height: 18px;
+}
+
+.search{
+  width: 100%;
+  max-width: 420px;
+  display:block;
+  margin: 0 auto 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background:#0f0f16;
+  color:var(--text);
+}
+
+.weapon-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.drops-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.weapon-card{
+  background:#161624;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  text-align:center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+.weapon-card h3{
+  margin: 0 0 8px;
   font-size: 18px;
 }
 
-#multiRandom {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 15px;
+.weapon-card .meta{
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
 }
 
-#randomCount {
-  width: 60px;
-  padding: 5px;
-  text-align: center;
+/* Tier stripe */
+.weapon-card::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width: 6px;
+  border-radius: 12px 0 0 12px;
+  background: #666;
 }
 
-#multiRandomResult {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  padding: 20px;
-}
+.weapon-card.tier-S::before{ background: var(--S); }
+.weapon-card.tier-A::before{ background: var(--A); }
+.weapon-card.tier-B::before{ background: var(--B); }
+.weapon-card.tier-F::before{ background: var(--F); }
 
-footer {
-  text-align: center;
-  padding: 15px;
-  background: #1a1a1a;
-  margin-top: 20px;
+.site-footer{
+  text-align:center;
+  padding: 14px 10px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  background:#0e0e16;
 }
