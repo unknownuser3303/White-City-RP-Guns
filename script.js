@@ -1,16 +1,12 @@
 let allWeapons = [];
 
-// Tier damage ranges
+// Damage ranges (display only)
 const DAMAGE_RANGES = {
-  S: [21, 24],
-  A: [23, 26],
-  B: [25, 28],
-  F: [27, 36],
+  S: "21–24",
+  A: "23–26",
+  B: "25–28",
+  F: "27–36"
 };
-
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 function setStatus(msg) {
   const el = document.getElementById("status");
@@ -30,11 +26,14 @@ function escapeHtml(str) {
 function makeCard(w) {
   const card = document.createElement("div");
   card.className = "weapon-card tier-" + w.tier;
+
+  const dmgRange = DAMAGE_RANGES[w.tier] || "—";
+
   card.innerHTML = `
     <h3>${escapeHtml(w.name)}</h3>
     <div class="meta">
       Tier: <b>${escapeHtml(w.tier)}</b><br/>
-      Damage: ${escapeHtml(String(w.damage))}<br/>
+      Damage: ${dmgRange}<br/>
       Fire Rate: ${escapeHtml(w.fireRate)}
     </div>
   `;
@@ -55,15 +54,28 @@ function renderDrop(drop) {
   drop.forEach((w) => container.appendChild(makeCard(w)));
 }
 
-// Apply tier damage ranges ONCE per page load
-function applyTierDamages(weapons) {
-  return weapons.map(w => {
-    const range = DAMAGE_RANGES[w.tier] || [20, 30];
-    return {
-      ...w,
-      damage: randInt(range[0], range[1])
-    };
-  });
+// Pick unique items with weights (higher weight = more likely)
+function weightedPickUnique(items, count, weightFn) {
+  const picked = [];
+  const pool = [...items];
+
+  while (picked.length < count && pool.length > 0) {
+    const weights = pool.map(weightFn);
+    const total = weights.reduce((a, b) => a + b, 0);
+
+    let r = Math.random() * total;
+    let idx = 0;
+
+    for (; idx < pool.length; idx++) {
+      r -= weights[idx];
+      if (r <= 0) break;
+    }
+
+    picked.push(pool[idx]);
+    pool.splice(idx, 1); // remove to keep unique
+  }
+
+  return picked;
 }
 
 // ----- Tier rules -----
@@ -75,56 +87,53 @@ function getTierDrop(tierName) {
     case "Test Drops":
       pool = allWeapons.filter((w) => w.tier === "S" || w.tier === "A");
       count = 2;
-      break;
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Tier 1":
+      // Tier 1: S/A/B, but B is low luck AND MGlock19 is boosted
       pool = allWeapons.filter((w) => ["S", "A", "B"].includes(w.tier));
       count = 4;
-      break;
+
+      return weightedPickUnique(pool, count, (w) => {
+        if (w.name === "MGlock19") return 6; // BOOST MGlock19 (raise to 8/10 if you want more)
+        if (w.tier === "B") return 0.6;      // LOW LUCK B
+        return 1;                             // normal
+      });
 
     case "Tier 1.5":
       pool = allWeapons.filter((w) => ["F", "B"].includes(w.tier));
       count = 4;
-      break;
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Tier 2":
       pool = [...allWeapons];
       count = 6;
-      break;
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Refill":
       pool = [...allWeapons];
       count = 1;
-      break;
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     default:
       pool = [...allWeapons];
       count = 1;
+      return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
   }
-
-  const shuffled = [...pool].sort(() => 0.5 - Math.random());
-
-  // Tier 1: B is low luck -> max 1 B
-  if (tierName === "Tier 1") {
-    const nonB = shuffled.filter((w) => w.tier !== "B");
-    const bOnly = shuffled.filter((w) => w.tier === "B");
-    const combined = nonB.concat(bOnly.slice(0, 1));
-    return combined.slice(0, count);
-  }
-
-  return shuffled.slice(0, count);
 }
 
 // ===== REAL CSGO STYLE SPIN =====
+// Lands on first item in the drop under the center marker line
 function playCsgoSpin(finalDrop) {
   const track = document.getElementById("spinTrack");
   const wrapper = document.querySelector(".spin-area");
+
+  // If spin area missing, just show results
   if (!track || !wrapper) {
     renderDrop(finalDrop);
     return;
   }
 
-  // Winner = first item in the drop
   const winner = finalDrop[0];
 
   const preCount = 40;
@@ -152,27 +161,26 @@ function playCsgoSpin(finalDrop) {
 
   let target = winnerLeft - centerOffset;
 
-  // jitter
-  const jitter = Math.floor(Math.random() * 40) - 20;
+  // Small jitter so it feels more natural
+  const jitter = Math.floor(Math.random() * 40) - 20; // -20..+19
   target = Math.max(0, target + jitter);
 
   track.style.transition = "transform 4.2s cubic-bezier(.08,.85,.12,1)";
   track.style.transform = `translateX(-${target}px)`;
 
+  // Reveal full drop after spin finishes
   setTimeout(() => {
     renderDrop(finalDrop);
   }, 4300);
 }
 
-// ----- Load weapons.json (cache busted) -----
+// ----- Load weapons.json (cache bust) -----
 function loadWeapons() {
   setStatus("Loading weapons...");
   fetch("weapons.json?" + Date.now())
     .then((res) => res.json())
     .then((data) => {
-      // apply tier-based damage ranges once
-      allWeapons = applyTierDamages(data);
-
+      allWeapons = data;
       renderWeapons(allWeapons);
       setStatus(`Loaded ${allWeapons.length} weapons.`);
     })
@@ -194,6 +202,7 @@ function wireUI() {
         setStatus("Weapons not loaded yet.");
         return;
       }
+
       const tier = tierSelect.value;
       const drop = getTierDrop(tier);
 
@@ -205,7 +214,9 @@ function wireUI() {
   if (search) {
     search.addEventListener("input", (e) => {
       const q = e.target.value.toLowerCase();
-      const filtered = allWeapons.filter((w) => w.name.toLowerCase().includes(q));
+      const filtered = allWeapons.filter((w) =>
+        w.name.toLowerCase().includes(q)
+      );
       renderWeapons(filtered);
     });
   }
