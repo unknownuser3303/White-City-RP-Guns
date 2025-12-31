@@ -12,8 +12,6 @@ const showT2Btn = document.getElementById("showT2Btn");
 const showAllBtn = document.getElementById("showAllBtn");
 
 let weapons = [];
-let damageMin = 0;
-let damageMax = 100;
 
 /* ---- Inspect Modal elements ---- */
 const inspectModal = document.getElementById("inspectModal");
@@ -32,35 +30,96 @@ let barVal = null;
 let barMin = null;
 let barMax = null;
 
-function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
+function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 
-async function loadWeapons(){
-  const res = await fetch("./weapons.json", { cache: "no-store" });
-  weapons = await res.json();
+/* ---------- Helpers ---------- */
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+function starsHTML(stars) { return "★".repeat(stars || 0); }
 
-  // Compute min/max damage for scaling bar
-  const dmgVals = weapons.map(w => Number(w.damage)).filter(v => Number.isFinite(v));
-  if (dmgVals.length) {
-    damageMin = Math.min(...dmgVals);
-    damageMax = Math.max(...dmgVals);
-  } else {
-    damageMin = 0;
-    damageMax = 100;
-  }
-}
-
-/* ---- Always fetch the “real” weapon stats from weapons.json ---- */
-function canonicalName(name){
-  return String(name || "").trim().toLowerCase();
-}
-
-function getWeaponByName(name){
+function canonicalName(name) { return String(name || "").trim().toLowerCase(); }
+function getWeaponByName(name) {
   const key = canonicalName(name);
   return weapons.find(w => canonicalName(w.name) === key) || null;
 }
 
+/* ---------- Tier damage ranges ---------- */
+const DAMAGE_RANGES = {
+  S: { min: 21, max: 24 },
+  A: { min: 23, max: 26 },
+  B: { min: 25, max: 28 },
+  F: { min: 30, max: 36 }
+};
+
+function generateDamageForTier(tier) {
+  const r = DAMAGE_RANGES[tier] || { min: 20, max: 30 };
+  return randInt(r.min, r.max);
+}
+
+/* ---------- Fire rate (RPM) by weapon type ---------- */
+function classifyWeapon(name) {
+  const n = canonicalName(name);
+
+  // SMGs
+  if (n.includes("mac10") || n.includes("kriss") || n.includes("vector")) return "smg";
+
+  // Rifle/AR/Carbine
+  if (n.includes("mcx") || n.includes("arp") || n.includes("draco")) return "rifle";
+
+  // Switch
+  if (n.includes("switch")) return "switch";
+
+  // Default
+  return "pistol";
+}
+
+// Realistic-ish RPM ranges
+const RPM_RANGES = {
+  pistol: { min: 280, max: 520 },   // semi-auto
+  rifle:  { min: 600, max: 850 },   // auto/binary-ish
+  smg:    { min: 850, max: 1100 },  // fast
+  switch: { min: 1100, max: 1600 }  // very fast
+};
+
+function generateRPM(name) {
+  const type = classifyWeapon(name);
+  const r = RPM_RANGES[type] || RPM_RANGES.pistol;
+
+  // Tiny bias: "Binary" tends to be higher within rifle range
+  const n = canonicalName(name);
+  if (type === "rifle" && n.includes("binary")) {
+    return randInt(Math.max(r.min, 720), r.max);
+  }
+
+  return randInt(r.min, r.max);
+}
+
+/* ---------- Build stats ONCE per weapon (stable) ---------- */
+function ensureGeneratedStats(w) {
+  if (w._damage == null) w._damage = generateDamageForTier(w.tier);
+  if (w._rpm == null) w._rpm = generateRPM(w.name);
+  return w;
+}
+
+/* ---------- Determine bar min/max from your tier ranges ---------- */
+const GLOBAL_MIN_DAMAGE = Math.min(...Object.values(DAMAGE_RANGES).map(x => x.min));
+const GLOBAL_MAX_DAMAGE = Math.max(...Object.values(DAMAGE_RANGES).map(x => x.max));
+
+function damagePct(dmg) {
+  const v = Number(dmg);
+  if (!Number.isFinite(v)) return 0;
+  return clamp01((v - GLOBAL_MIN_DAMAGE) / (GLOBAL_MAX_DAMAGE - GLOBAL_MIN_DAMAGE));
+}
+
+/* -------- Load weapons.json (ONLY needs name + tier + stars) -------- */
+async function loadWeapons() {
+  const res = await fetch("./weapons.json", { cache: "no-store" });
+  weapons = await res.json();
+  weapons = weapons.map(w => ensureGeneratedStats(w));
+}
+
 /* -------- Image resolver -------- */
-function slug(n){
+function slug(n) {
   return n.toLowerCase()
     .replace(/\(b\)/g, "b")
     .replace(/[()]/g, "")
@@ -70,9 +129,9 @@ function slug(n){
     .replace(/^-|-$/g, "");
 }
 
-function imageCandidates(name){
+function imageCandidates(name) {
   const baseSlug = slug(name);
-  const baseRaw  = name.replace(/\(B\)/g,"").replace(/\(b\)/g,"").trim();
+  const baseRaw = name.replace(/\(B\)/g, "").replace(/\(b\)/g, "").trim();
   const dir = "./images/weapons/";
 
   const list = [
@@ -86,6 +145,7 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
+    // known messy ones
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -96,18 +156,8 @@ function imageCandidates(name){
   return [...new Set(list)];
 }
 
-function starsHTML(stars){ return "★".repeat(stars || 0); }
-
-/* -------- Damage bar helpers -------- */
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-function damagePct(dmg){
-  const v = Number(dmg);
-  if (!Number.isFinite(v)) return 0;
-  if (damageMax === damageMin) return 1;
-  return clamp01((v - damageMin) / (damageMax - damageMin));
-}
-
-function ensureDamageBar(){
+/* -------- Damage Bar (inject) -------- */
+function ensureDamageBar() {
   if (barWrap) return;
 
   barWrap = document.createElement("div");
@@ -125,8 +175,8 @@ function ensureDamageBar(){
       <div id="damageBarFill" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(255,45,59,.85), rgba(255,200,90,.75));"></div>
     </div>
     <div style="display:flex; justify-content:space-between; font-size:11px; letter-spacing:.12em; color:rgba(255,255,255,.55);">
-      <div id="damageBarMin">0</div>
-      <div id="damageBarMax">100</div>
+      <div id="damageBarMin">${GLOBAL_MIN_DAMAGE}</div>
+      <div id="damageBarMax">${GLOBAL_MAX_DAMAGE}</div>
     </div>
   `;
 
@@ -134,40 +184,36 @@ function ensureDamageBar(){
   if (top && top.parentElement) top.parentElement.insertBefore(barWrap, top.nextSibling);
 
   barFill = document.getElementById("damageBarFill");
-  barVal  = document.getElementById("damageBarValue");
-  barMin  = document.getElementById("damageBarMin");
-  barMax  = document.getElementById("damageBarMax");
+  barVal = document.getElementById("damageBarValue");
+  barMin = document.getElementById("damageBarMin");
+  barMax = document.getElementById("damageBarMax");
 }
 
-/* -------- Inspect modal (ALWAYS uses weapons.json stats) -------- */
-function openInspect(anyWeaponObj){
+/* -------- Inspect modal -------- */
+function openInspect(anyWeaponObj) {
   ensureDamageBar();
 
-  // ✅ Lookup real weapon from JSON by name
-  const real = getWeaponByName(anyWeaponObj?.name) || anyWeaponObj;
+  const real = ensureGeneratedStats(getWeaponByName(anyWeaponObj?.name) || anyWeaponObj);
 
   inspectModal.classList.add("show");
-  inspectModal.setAttribute("aria-hidden","false");
+  inspectModal.setAttribute("aria-hidden", "false");
 
   modalTier.textContent = `Tier ${real.tier ?? "?"}`;
   modalTier.className = `modalTier tier-${real.tier ?? "S"}`;
   modalName.textContent = real.name ?? "Unknown";
 
-  // ✅ Pull from weapons.json (real.damage, real.fireRate)
-  const dmg = Number.isFinite(Number(real.damage)) ? Number(real.damage) : null;
-  const fr  = real.fireRate ? String(real.fireRate) : null;
+  const dmg = real._damage;
+  const rpm = real._rpm;
 
-  modalStats.textContent =
-    `Damage: ${dmg !== null ? dmg : "N/A"} • Fire Rate: ${fr ?? "N/A"}`;
-
+  modalStats.textContent = `Damage: ${dmg} • Fire Rate: ${rpm} RPM`;
   modalStars.textContent = starsHTML(real.stars || 0);
 
-  // ✅ Update bar with real.damage
+  // bar update
   const pct = damagePct(dmg);
   if (barFill) barFill.style.width = `${Math.round(pct * 100)}%`;
-  if (barVal)  barVal.textContent = (dmg !== null ? String(dmg) : "N/A");
-  if (barMin)  barMin.textContent = String(damageMin);
-  if (barMax)  barMax.textContent = String(damageMax);
+  if (barVal) barVal.textContent = String(dmg);
+  if (barMin) barMin.textContent = String(GLOBAL_MIN_DAMAGE);
+  if (barMax) barMax.textContent = String(GLOBAL_MAX_DAMAGE);
 
   // image
   const candidates = imageCandidates(real.name || "");
@@ -184,38 +230,40 @@ function openInspect(anyWeaponObj){
   tryNext();
 }
 
-function closeInspect(){
+function closeInspect() {
   inspectModal.classList.remove("show");
-  inspectModal.setAttribute("aria-hidden","true");
+  inspectModal.setAttribute("aria-hidden", "true");
 }
 
 modalClose.addEventListener("click", closeInspect);
 modalX.addEventListener("click", closeInspect);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInspect(); });
 
-/* -------- Cards / Rendering -------- */
-function makeCard(w){
+/* -------- Cards -------- */
+function makeCard(w) {
+  const real = ensureGeneratedStats(getWeaponByName(w?.name) || w);
+
   const div = document.createElement("div");
-  div.className = `card tier-${w.tier}`;
+  div.className = `card tier-${real.tier}`;
   div.innerHTML = `
-    <div class="cardName">${w.name}</div>
+    <div class="cardName">${real.name}</div>
     <div class="cardImgWrap">
-      <img alt="${w.name}">
+      <img alt="${real.name}">
       <div class="missing" style="display:none;"></div>
     </div>
-    <div class="cardStars">${starsHTML(w.stars || 0)}</div>
+    <div class="cardStars">${starsHTML(real.stars || 0)}</div>
   `;
 
   const img = div.querySelector("img");
   const miss = div.querySelector(".missing");
-  const candidates = imageCandidates(w.name);
+  const candidates = imageCandidates(real.name);
 
   let i = 0;
   const tryNext = () => {
     if (i >= candidates.length) {
       img.style.display = "none";
       miss.style.display = "flex";
-      miss.textContent = `MISSING:\n${w.name}`;
+      miss.textContent = `MISSING:\n${real.name}`;
       return;
     }
     img.src = candidates[i++];
@@ -224,51 +272,50 @@ function makeCard(w){
   img.onerror = tryNext;
   tryNext();
 
-  // ✅ Click uses openInspect which looks up stats in weapons.json
-  div.addEventListener("click", () => openInspect(w));
+  div.addEventListener("click", () => openInspect(real));
   return div;
 }
 
-function renderGrid(targetEl, list){
+function renderGrid(targetEl, list) {
   targetEl.innerHTML = "";
   list.forEach(w => targetEl.appendChild(makeCard(w)));
 }
 
-function pickRandom(list){
+function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
 /* -------- Tier rules -------- */
-function tierConfig(tierName){
-  const SA = weapons.filter(w => ["S","A"].includes(w.tier));
-  const BF = weapons.filter(w => ["B","F"].includes(w.tier));
+function tierConfig(tierName) {
+  const SA = weapons.filter(w => ["S", "A"].includes(w.tier));
+  const BF = weapons.filter(w => ["B", "F"].includes(w.tier));
 
   if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
-  if (tierName === "Tier 1")     return { count: 4, mode: "normal", pool: SA, visual: SA };
+  if (tierName === "Tier 1") return { count: 4, mode: "normal", pool: SA, visual: SA };
 
-  // Tier 1.5: mostly BF, small SA
-  if (tierName === "Tier 1.5")   return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
+  // T1.5: mostly BF, small SA
+  if (tierName === "Tier 1.5") return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
 
-  // Tier 2: ONLY BF
-  if (tierName === "Tier 2")     return { count: 6, mode: "normal", pool: BF, visual: BF };
+  // T2: ONLY BF
+  if (tierName === "Tier 2") return { count: 6, mode: "normal", pool: BF, visual: BF };
 
-  if (tierName === "Refill")     return { count: 1, mode: "normal", pool: weapons, visual: weapons };
+  if (tierName === "Refill") return { count: 1, mode: "normal", pool: weapons, visual: weapons };
   return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 }
 
-function pickWinner(cfg){
+function pickWinner(cfg) {
   if (cfg.mode === "weighted") return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
   return pickRandom(cfg.pool);
 }
 
 /* -------- CS:GO roll once -------- */
-async function rollOnce(winner, visualPool){
+async function rollOnce(winner, visualPool) {
   const PRE = 40, POST = 12;
   const roll = [];
 
-  for(let i=0;i<PRE;i++) roll.push(pickRandom(visualPool));
+  for (let i = 0; i < PRE; i++) roll.push(pickRandom(visualPool));
   roll.push(winner);
-  for(let i=0;i<POST;i++) roll.push(pickRandom(visualPool));
+  for (let i = 0; i < POST; i++) roll.push(pickRandom(visualPool));
 
   strip.innerHTML = "";
   roll.forEach(w => strip.appendChild(makeCard(w)));
@@ -291,21 +338,21 @@ async function rollOnce(winner, visualPool){
   await new Promise(r => setTimeout(r, 4700));
 }
 
-function addDrop(w){ dropsDiv.appendChild(makeCard(w)); }
+function addDrop(w) { dropsDiv.appendChild(makeCard(w)); }
 
 /* -------- Filters -------- */
-function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
-function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
-function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
-function filterAll(){ return weapons; }
+function filterT1() { return weapons.filter(w => ["S", "A"].includes(w.tier)); }
+function filterT15() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
+function filterT2() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
+function filterAll() { return weapons; }
 
 /* -------- Transition helpers -------- */
-function setActiveButton(btn){
+function setActiveButton(btn) {
   [showT1Btn, showT15Btn, showT2Btn, showAllBtn].forEach(b => b?.classList.remove("is-active"));
   btn?.classList.add("is-active");
 }
 
-function switchGrid(list, activeBtn){
+function switchGrid(list, activeBtn) {
   if (activeBtn) setActiveButton(activeBtn);
   allWeaponsDiv.classList.add("is-switching");
   setTimeout(() => {
@@ -336,6 +383,8 @@ spinBtn.addEventListener("click", async () => {
   const used = new Set();
   for (let i = 0; i < count; i++) {
     let winner = pickWinner(cfg);
+
+    // avoid duplicates if possible
     let tries = 0;
     while (used.has(winner.name) && tries < 25) {
       winner = pickWinner(cfg);
@@ -343,7 +392,7 @@ spinBtn.addEventListener("click", async () => {
     }
     used.add(winner.name);
 
-    setStatus(`Rolling ${i+1}/${count}...`);
+    setStatus(`Rolling ${i + 1}/${count}...`);
     await rollOnce(winner, visualPool);
     addDrop(winner);
   }
@@ -364,7 +413,7 @@ searchInput.addEventListener("input", (e) => {
 });
 
 /* -------- Init -------- */
-(async function init(){
+(async function init() {
   await loadWeapons();
   renderGrid(allWeaponsDiv, weapons);
   setActiveButton(showAllBtn);
