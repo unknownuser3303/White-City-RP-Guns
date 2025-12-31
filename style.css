@@ -1,524 +1,396 @@
-/* =========================================================
-   White City RP Guns — CLEAN DARK UI (Better Layout)
-   Replace your ENTIRE style.css with this.
-   ========================================================= */
+:root{
+  --bg0:#05060a;
+  --bg1:#0b0d14;
 
-/* ---------- Reset ---------- */
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: rgba(255,255,255,.92);
-  background: #070710;
-  overflow-x: hidden;
+  --chrome1: rgba(240,240,245,.92);
+  --chrome2: rgba(160,165,175,.85);
+
+  --red2:#ff2d3b;
+
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.70);
 }
 
-/* ---------- Background (premium, not washed-out) ---------- */
-body::before{
-  content:"";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background: radial-gradient(1200px 800px at 60% 20%, rgba(255,45,59,.12), transparent 60%),
+              radial-gradient(900px 700px at 20% 70%, rgba(176,107,255,.12), transparent 60%),
+              linear-gradient(180deg, var(--bg0), var(--bg1));
+  overflow-x:hidden;
+}
+
+/* Background theme */
+.bg{ position:fixed; inset:0; pointer-events:none; z-index:-1; }
+.bgLogo{
+  position:absolute; inset:-40px;
   background:
-    radial-gradient(900px 520px at 20% 10%, rgba(140,80,255,.18), transparent 60%),
-    radial-gradient(900px 520px at 80% 15%, rgba(0,190,255,.12), transparent 62%),
-    radial-gradient(900px 520px at 50% 110%, rgba(40,255,170,.10), transparent 60%),
-    linear-gradient(180deg, #070710 0%, #060612 55%, #05050e 100%);
+    radial-gradient(900px 650px at 62% 35%, rgba(255,45,59,.16), transparent 55%),
+    radial-gradient(900px 650px at 40% 62%, rgba(176,107,255,.10), transparent 60%),
+    url("images/white-city-logo.png") center/520px no-repeat;
+  opacity:.22;
+  filter: saturate(1.05) contrast(1.05);
 }
-
-/* subtle vignette so it looks “framed” */
-body::after{
-  content:"";
-  position: fixed;
-  inset: -2px;
-  pointer-events:none;
-  background: radial-gradient(1200px 800px at 50% 40%, transparent 60%, rgba(0,0,0,.55) 100%);
-}
-
-/* =========================================================
-   LAYOUT
-   We style your existing page without requiring big HTML changes.
-   If you already have .wrapper, great. If not, this still works.
-   ========================================================= */
-
-/* Give the whole page a centered width */
-.wrapper{
-  width: min(1250px, calc(100% - 28px));
-  margin: 18px auto 38px;
-}
-
-/* Main “app shell” (left controls + right content) */
-.appShell{
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 14px;
-  align-items: start;
-}
-
-@media (max-width: 980px){
-  .appShell{ grid-template-columns: 1fr; }
-}
-
-/* ---------- Top Banner / Header ---------- */
-header{
-  border-radius: 18px;
-  padding: 14px;
-  margin-bottom: 14px;
-  border: 1px solid rgba(255,255,255,.10);
+.bgVignette{
+  position:absolute; inset:0;
   background:
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  box-shadow:
-    0 18px 50px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.06) inset;
-  backdrop-filter: blur(10px);
+    radial-gradient(circle at 50% 35%, transparent 0 45%, rgba(0,0,0,.65) 70%),
+    linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.35));
+}
+.bgNoise{
+  position:absolute; inset:0; opacity:.08;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
 }
 
-.headerRow{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.app{ display:flex; min-height:100vh; }
 
-.brand{
-  display:flex;
-  gap: 12px;
-  align-items:center;
-}
-
-.brand img{
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  object-fit: cover;
-  border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 14px 28px rgba(0,0,0,.45);
-}
-
-.brandText .title{
-  font-weight: 800;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  margin: 0;
-  font-size: 14px;
-  color: rgba(255,255,255,.95);
-}
-
-.brandText .sub{
-  margin: 6px 0 0;
-  font-size: 12px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.62);
-}
-
-/* ---------- Panels ---------- */
-.panel{
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.30);
-  box-shadow:
-    0 18px 45px rgba(0,0,0,.55),
-    0 0 0 1px rgba(255,255,255,.06) inset;
-  backdrop-filter: blur(10px);
-}
-
-/* Left sidebar */
+/* Sidebar */
 .sidebar{
-  position: sticky;
-  top: 14px;
+  width: 270px;
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 16px;
+  background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.25));
+  border-right: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(6px);
+}
+
+.brandCard{
+  display:flex;
+  gap: 12px;
+  align-items:center;
   padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.25));
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
 }
-
-@media (max-width: 980px){
-  .sidebar{ position: static; }
+.brandLogo{
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.65));
 }
-
-.groupTitle{
-  margin: 0 0 10px;
-  font-size: 12px;
+.brandTitle{
+  font-weight: 900;
+  letter-spacing: .14em;
+  font-size: 13px;
+  background: linear-gradient(180deg, var(--chrome1), var(--chrome2));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color: transparent;
+}
+.brandSub{
+  margin-top: 3px;
+  font-size: 11px;
   letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.72);
+  color: rgba(255,255,255,.65);
 }
 
-.stack{ display: grid; gap: 10px; }
-
-/* Right main content */
-.main{
+.panel{
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
   padding: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.30));
+  box-shadow: 0 14px 35px rgba(0,0,0,.45);
 }
-
-/* =========================================================
-   CONTROLS
-   ========================================================= */
-label{
+.panelTitle{
   font-size: 12px;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.70);
+  color: rgba(255,255,255,.75);
+  margin-bottom: 10px;
 }
+.panelBody{ display:flex; flex-direction:column; gap:10px; }
 
-.controlRow{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-  flex-wrap: wrap;
-}
+.miniLabel{ font-size: 12px; color: rgba(255,255,255,.70); margin-bottom: -6px; }
 
-select, input[type="text"]{
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(10,10,18,.55);
-  color: rgba(255,255,255,.92);
+.uiSelect{
+  background: rgba(0,0,0,.40);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  padding: 10px;
   outline: none;
-  box-shadow: 0 10px 22px rgba(0,0,0,.35);
 }
 
-select:focus, input[type="text"]:focus{
-  border-color: rgba(160,120,255,.60);
-  box-shadow: 0 0 0 3px rgba(160,120,255,.16), 0 12px 26px rgba(0,0,0,.45);
+.uiBtn{
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35);
+  color: rgba(255,255,255,.86);
+  cursor:pointer;
+  transition: transform .08s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;
+  font-size: 14px;
 }
-
-button{
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(170,120,255,.60);
-  background: linear-gradient(180deg, rgba(120,60,255,.26), rgba(120,60,255,.12));
-  color: rgba(255,255,255,.92);
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  font-size: 12px;
-  cursor: pointer;
-  box-shadow: 0 12px 26px rgba(0,0,0,.40);
-  transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+.uiBtn:hover{
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 0 0 3px rgba(255,45,59,.10);
+  border-color: rgba(255,45,59,.35);
 }
+.uiBtn:active{ transform: translateY(1px); }
 
-button:hover{
-  transform: translateY(-1px);
-  border-color: rgba(210,170,255,.85);
-  background: linear-gradient(180deg, rgba(120,60,255,.34), rgba(120,60,255,.14));
-  box-shadow: 0 16px 34px rgba(0,0,0,.50);
+.uiBtn.primary{
+  background: linear-gradient(180deg, rgba(255,45,59,.25), rgba(0,0,0,.40));
+  border-color: rgba(255,45,59,.45);
+  box-shadow: 0 12px 28px rgba(255,45,59,.10);
 }
-
-button:active{ transform: translateY(0px) scale(.99); }
-button:disabled{ opacity:.55; cursor:not-allowed; }
-
-/* active “section” button */
-.is-active{
-  border-color: rgba(80,230,255,.75) !important;
-  background: linear-gradient(180deg, rgba(80,230,255,.22), rgba(80,230,255,.10)) !important;
+.uiBtn.primary:hover{
+  box-shadow: 0 0 0 3px rgba(255,45,59,.18), 0 18px 40px rgba(255,45,59,.10);
 }
-
-/* =========================================================
-   TITLES / TEXT
-   ========================================================= */
-.sectionTitle{
-  margin: 12px 0 10px;
-  font-size: 12px;
-  letter-spacing: .20em;
-  text-transform: uppercase;
+.uiBtn.ghost{
+  background: rgba(0,0,0,.20);
+  border-color: rgba(255,255,255,.10);
   color: rgba(255,255,255,.70);
 }
+.uiBtn.is-active{
+  border-color: rgba(255,45,59,.55);
+  box-shadow: 0 0 0 3px rgba(255,45,59,.14);
+}
+.statusText{ font-size: 12px; color: rgba(255,255,255,.68); padding-top: 2px; }
 
-#status{
-  margin-top: 8px;
-  font-size: 12px;
-  letter-spacing: .12em;
-  color: rgba(255,255,255,.62);
+/* Main */
+.main{ flex:1; padding: 18px 22px 40px; overflow:auto; }
+
+.topHeader{ display:flex; justify-content:center; margin: 6px 0 14px; }
+.topTitle{
+  text-align:center;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.20));
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 14px 35px rgba(0,0,0,.40);
+}
+.topTitleMain{
+  display:block;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .10em;
+  background: linear-gradient(180deg, var(--chrome1), var(--chrome2));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color: transparent;
+}
+.topTitleSub{
+  display:block;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: rgba(255,255,255,.60);
+  margin-top: 6px;
 }
 
-/* =========================================================
-   CSGO ROLL STRIP (fixes “spread across website”)
-   ========================================================= */
-.rollWrap{
-  padding: 14px;
-}
-
+.rollArea{ position: relative; width: min(1100px, 100%); margin: 0 auto; }
 .mask{
-  position: relative;
-  overflow: hidden;
+  overflow:hidden;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.12);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.25));
-  box-shadow: 0 16px 40px rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.10);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.35));
+  box-shadow: 0 18px 50px rgba(0,0,0,.55);
 }
-
-/* left/right fade so it looks like a real case opening */
-.mask::before{
-  content:"";
+.marker{
   position:absolute;
-  inset: 0;
-  pointer-events:none;
-  background:
-    linear-gradient(90deg,
-      rgba(5,5,12,.95) 0%,
-      rgba(5,5,12,0) 14%,
-      rgba(5,5,12,0) 86%,
-      rgba(5,5,12,.95) 100%);
-  z-index: 3;
-}
-
-/* center marker line */
-.mask::after{
-  content:"";
-  position:absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 50%;
+  left:50%;
+  top: 0;
+  bottom: 0;
   width: 4px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, transparent, rgba(255,255,255,.85), transparent);
-  box-shadow: 0 0 18px rgba(255,255,255,.22);
-  border-radius: 999px;
-  z-index: 4;
+  transform: translateX(-2px);
+  background: linear-gradient(var(--red2), #ffb300);
+  box-shadow: 0 0 14px rgba(255,45,59,.55);
+  z-index: 5;
 }
-
-#strip{
+.strip{
   display:flex;
   gap: 12px;
-  padding: 18px 18px;
+  padding: 18px;
+  transition: transform 4.6s cubic-bezier(.08,.85,.12,1);
   will-change: transform;
-  align-items: center;
 }
 
-/* =========================================================
-   DROPS
-   ========================================================= */
-#drops{
+.section{ margin-top: 18px; }
+.row{ display:flex; align-items:center; justify-content:space-between; gap: 14px; }
+
+.h2{
+  margin: 0 0 10px;
+  font-size: 15px;
+  letter-spacing:.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.78);
+}
+
+.search{
+  width: 260px;
+  max-width: 50vw;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  outline:none;
+}
+
+/* Grid + Cards */
+.grid{ display:flex; flex-wrap:wrap; gap: 12px; align-items:flex-start; }
+
+.card{
+  width: 210px;
+  min-width: 210px;
+  height: 150px;
+  border-radius: 16px;
+  position: relative;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 12px 34px rgba(0,0,0,.65);
+  cursor:pointer;
+}
+.card:hover{ transform: translateY(-1px); transition: transform .12s ease; }
+
+.card::after{
+  content:"";
+  position:absolute;
+  inset:-40px;
+  background: radial-gradient(250px 180px at 30% 35%, rgba(255,255,255,.12), transparent 60%);
+  pointer-events:none;
+}
+.cardName{
+  position:absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  z-index:2;
+}
+.cardStars{
+  position:absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 14px;
+  text-shadow: 0 2px 10px rgba(0,0,0,.6);
+  z-index:2;
+}
+.cardImgWrap{
+  height: 150px;
   display:flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 10px 0 0;
+  align-items:center;
+  justify-content:center;
+  padding-top: 12px;
+  z-index: 1;
+}
+.card img{
+  width: 160px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.72));
+}
+.missing{
+  width: 180px;
+  height: 110px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:12px;
+  text-align:center;
+  padding:10px;
+  background: rgba(0,0,0,.35);
+  border: 1px dashed rgba(255,255,255,.35);
+  border-radius: 10px;
 }
 
-/* =========================================================
-   GRID (All Weapons)
-   ========================================================= */
+/* Tier colors */
+.tier-S{ background: radial-gradient(circle at 30% 30%, rgba(80,220,80,.45), rgba(20,90,20,.55)); }
+.tier-A{ background: radial-gradient(circle at 30% 30%, rgba(60,170,255,.45), rgba(10,60,120,.55)); }
+.tier-B{ background: radial-gradient(circle at 30% 30%, rgba(170,90,255,.45), rgba(60,15,90,.55)); }
+.tier-F{ background: radial-gradient(circle at 30% 30%, rgba(255,215,90,.45), rgba(120,70,10,.55)); }
+
+.footer{ margin-top: 24px; text-align:center; font-size: 12px; color: rgba(255,255,255,.55); }
+
+/* Transition for Show buttons */
 #allWeapons{
-  padding: 14px;
-  display:grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   transition: opacity .22s ease, transform .22s ease;
+  will-change: opacity, transform;
 }
-
 #allWeapons.is-switching{
   opacity: 0;
   transform: translateY(8px);
 }
 
-/* =========================================================
-   CARD LOOK (bigger, cleaner)
-   ========================================================= */
-.card{
-  position: relative;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.28);
-  overflow: hidden;
-  cursor: pointer;
-  box-shadow: 0 14px 30px rgba(0,0,0,.45);
-  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+/* Inspect modal */
+.modal{ position: fixed; inset: 0; display: none; z-index: 999; }
+.modal.show{ display:block; }
+
+.modalBackdrop{
+  position:absolute; inset:0;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(6px);
 }
-
-.card:hover{
-  transform: translateY(-2px);
-  border-color: rgba(255,255,255,.16);
-  box-shadow: 0 18px 42px rgba(0,0,0,.55);
-}
-
-.cardName{
-  padding: 10px 12px 0;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.94);
-}
-
-.cardImgWrap{
-  padding: 12px;
-  display:grid;
-  place-items:center;
-}
-
-.cardImgWrap img{
-  width: 100%;
-  max-width: 170px;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 16px 34px rgba(0,0,0,.55);
-}
-
-/* Stars bottom-right */
-.cardStars{
-  position:absolute;
-  right: 12px;
-  bottom: 12px;
-  font-size: 14px;
-  letter-spacing: .22em;
-  color: rgba(255,255,255,.92);
-  text-shadow: 0 10px 25px rgba(0,0,0,.70);
-}
-
-/* Tier accent: a soft glow top border + left */
-.tier-S{ box-shadow: 0 0 0 1px rgba(60,255,160,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
-.tier-A{ box-shadow: 0 0 0 1px rgba(60,220,255,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
-.tier-B{ box-shadow: 0 0 0 1px rgba(180,90,255,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
-.tier-F{ box-shadow: 0 0 0 1px rgba(255,205,80,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
-
-.tier-S::before,
-.tier-A::before,
-.tier-B::before,
-.tier-F::before{
-  content:"";
-  position:absolute;
-  inset: 0;
-  pointer-events:none;
-  opacity: .9;
-  border-radius: 16px;
-  border-top: 2px solid transparent;
-  border-left: 2px solid transparent;
-}
-
-.tier-S::before{ border-top-color: rgba(60,255,160,.65); border-left-color: rgba(60,255,160,.55); }
-.tier-A::before{ border-top-color: rgba(60,220,255,.65); border-left-color: rgba(60,220,255,.55); }
-.tier-B::before{ border-top-color: rgba(180,90,255,.65); border-left-color: rgba(180,90,255,.55); }
-.tier-F::before{ border-top-color: rgba(255,205,80,.70); border-left-color: rgba(255,205,80,.60); }
-
-/* =========================================================
-   MODAL (inspect)
-   ========================================================= */
-#inspectModal{
-  position: fixed;
-  inset: 0;
-  display: none;
-  place-items: center;
-  padding: 18px;
-  background: rgba(0,0,0,.65);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-}
-#inspectModal.show{ display:grid; }
-
 .modalCard{
-  width: min(920px, 100%);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(12,12,22,.88);
-  box-shadow: 0 30px 90px rgba(0,0,0,.70);
-  overflow:hidden;
+  position:absolute;
+  left:50%; top:50%;
+  transform: translate(-50%,-50%) scale(.96);
+  width: min(820px, 92vw);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.45));
+  box-shadow: 0 30px 90px rgba(0,0,0,.75);
+  padding: 18px;
+  animation: popIn .18s ease forwards;
 }
+@keyframes popIn{ to{ transform: translate(-50%,-50%) scale(1); } }
 
-.modalTop{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap: 12px;
-  padding: 14px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-
-.modalTier{
-  font-size: 12px;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  padding: 8px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
-}
-
-.modalClose{ display:flex; gap: 10px; }
-
-#modalX, #modalClose{
-  height: 36px; width: 36px;
-  padding: 0;
+.modalX{
+  position:absolute; right: 14px; top: 12px;
+  width: 38px; height: 38px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.06);
+  background: rgba(0,0,0,.35);
+  color:#fff;
+  cursor:pointer;
 }
-#modalX:hover, #modalClose:hover{ background: rgba(255,255,255,.10); }
-
-.modalBody{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 14px;
-}
-@media (max-width: 760px){
-  .modalBody{ grid-template-columns: 1fr; }
-}
-
-.modalLeft h2{
-  margin: 0;
-  font-size: 18px;
+.modalTop{ display:flex; gap: 12px; align-items:center; margin-bottom: 12px; }
+.modalTier{
+  padding: 10px 12px;
+  border-radius: 14px;
   font-weight: 900;
-  letter-spacing: .12em;
+  letter-spacing: .14em;
   text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.30);
 }
-
-#modalStats{
-  margin-top: 8px;
-  font-size: 12px;
-  letter-spacing: .10em;
-  color: rgba(255,255,255,.72);
-}
-
-#modalStars{
-  margin-top: 10px;
+.modalNameMain{
+  font-weight: 900;
+  letter-spacing: .08em;
   font-size: 18px;
-  letter-spacing: .25em;
-  color: rgba(255,255,255,.92);
+  background: linear-gradient(180deg, var(--chrome1), var(--chrome2));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color: transparent;
 }
-
-.modalRight{
-  display:grid;
-  place-items:center;
-  padding: 10px;
-}
-
-#modalImg{
-  width: 100%;
-  max-width: 420px;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 18px 45px rgba(0,0,0,.60);
-}
-
-/* =========================================================
-   OPTIONAL: keep small text from hugging edges
-   ========================================================= */
-footer{
-  margin-top: 14px;
-  text-align:center;
+.modalNameSub{
+  margin-top: 4px;
   font-size: 12px;
-  letter-spacing: .12em;
-  color: rgba(255,255,255,.55);
+  letter-spacing: .14em;
+  color: rgba(255,255,255,.65);
 }
-
-/* =========================================================
-   QUICK FIX: Your current screenshot shows huge empty space
-   That usually happens when content isn’t inside a centered wrapper
-   Use these helper rules to force sane widths.
-   ========================================================= */
-main, .content, .container{
-  width: 100%;
+.modalImgWrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height: 420px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: radial-gradient(500px 380px at 50% 35%, rgba(255,255,255,.08), rgba(0,0,0,.35));
+  overflow:hidden;
 }
-
-/* If you have elements like #app or .app, keep them centered */
-#app, .app{
-  width: min(1250px, calc(100% - 28px));
-  margin: 0 auto;
+.modalImgWrap img{
+  width: min(720px, 88vw);
+  height: 400px;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 30px rgba(0,0,0,.75));
 }
+.modalBottom{ display:flex; justify-content:flex-end; margin-top: 10px; }
+.modalStars{ font-size: 18px; letter-spacing: .10em; text-shadow: 0 8px 20px rgba(0,0,0,.65); }
