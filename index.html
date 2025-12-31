@@ -3,13 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>White City RP Guns</title>
+  <title>White City Weapons</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Background theme layers -->
+  <div class="bg">
+    <div class="bgLogo"></div>
+    <div class="bgVignette"></div>
+    <div class="bgNoise"></div>
+  </div>
+
   <div class="app">
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
+      <div class="brandCard">
+        <img class="brandLogo" src="images/white-city-logo.png" alt="White City Chicago" />
+        <div class="brandText">
+          <div class="brandTitle">WHITE CITY</div>
+          <div class="brandSub">CHICAGO • V2</div>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="panelTitle">Randomize</div>
         <div class="panelBody">
@@ -40,7 +55,12 @@
 
     <!-- MAIN -->
     <main class="main">
-      <h1 class="title">White City Weapons</h1>
+      <header class="topHeader">
+        <div class="topTitle">
+          <span class="topTitleMain">White City Weapons</span>
+          <span class="topTitleSub">Tiered drop randomizer</span>
+        </div>
+      </header>
 
       <!-- ROLL AREA -->
       <section class="rollArea">
@@ -63,7 +83,7 @@
         <div id="allWeapons" class="grid"></div>
       </section>
 
-      <div class="footer">Hosted on GitHub Pages</div>
+      <div class="footer">White City Chicago V2 • Hosted on GitHub Pages</div>
     </main>
   </div>
 
