@@ -9,13 +9,7 @@
   --red: #e0202a;
   --red2:#ff2d3b;
 
-  --violet:#b06bff;
-
   --panel: rgba(10,10,16,.55);
-  --panel2: rgba(0,0,0,.35);
-
-  --border: rgba(255,255,255,.12);
-  --border2: rgba(255,45,59,.30);
 
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.70);
@@ -181,6 +175,11 @@ body{
   color: rgba(255,255,255,.70);
 }
 
+.uiBtn.is-active{
+  border-color: rgba(255,45,59,.55);
+  box-shadow: 0 0 0 3px rgba(255,45,59,.14);
+}
+
 .statusText{
   font-size: 12px;
   color: rgba(255,255,255,.68);
@@ -304,7 +303,6 @@ body{
   border: 1px solid rgba(255,255,255,.10);
   box-shadow: 0 12px 34px rgba(0,0,0,.65);
 }
-
 .card::after{
   content:"";
   position:absolute;
@@ -312,7 +310,6 @@ body{
   background: radial-gradient(250px 180px at 30% 35%, rgba(255,255,255,.12), transparent 60%);
   pointer-events:none;
 }
-
 .cardName{
   position:absolute;
   top: 8px;
@@ -322,7 +319,6 @@ body{
   text-shadow: 0 2px 10px rgba(0,0,0,.6);
   z-index:2;
 }
-
 .cardStars{
   position:absolute;
   bottom: 8px;
@@ -331,7 +327,6 @@ body{
   text-shadow: 0 2px 10px rgba(0,0,0,.6);
   z-index:2;
 }
-
 .cardImgWrap{
   height: 150px;
   display:flex;
@@ -340,14 +335,12 @@ body{
   padding-top: 12px;
   z-index: 1;
 }
-
 .card img{
   width: 160px;
   height: 110px;
   object-fit: contain;
   filter: drop-shadow(0 10px 18px rgba(0,0,0,.72));
 }
-
 .missing{
   width: 180px;
   height: 110px;
@@ -374,4 +367,14 @@ body{
   text-align:center;
   font-size: 12px;
   color: rgba(255,255,255,.55);
+}
+
+/* ----- Filter transition for weapons grid ----- */
+#allWeapons{
+  transition: opacity .22s ease, transform .22s ease;
+  will-change: opacity, transform;
+}
+#allWeapons.is-switching{
+  opacity: 0;
+  transform: translateY(8px);
 }
