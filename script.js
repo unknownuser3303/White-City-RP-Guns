@@ -25,16 +25,21 @@ const modalStats = document.getElementById("modalStats");
 const modalImg = document.getElementById("modalImg");
 const modalStars = document.getElementById("modalStars");
 
+/* ---- Damage bar nodes (injected) ---- */
+let barWrap = null;
+let barFill = null;
+let barVal = null;
+let barMin = null;
+let barMax = null;
+
 function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
 
 async function loadWeapons(){
   const res = await fetch("./weapons.json", { cache: "no-store" });
   weapons = await res.json();
 
-  // compute damage range for bar scaling
-  const dmgVals = weapons
-    .map(w => Number(w.damage))
-    .filter(v => Number.isFinite(v));
+  // Compute min/max damage for scaling bar
+  const dmgVals = weapons.map(w => Number(w.damage)).filter(v => Number.isFinite(v));
   if (dmgVals.length) {
     damageMin = Math.min(...dmgVals);
     damageMax = Math.max(...dmgVals);
@@ -42,6 +47,16 @@ async function loadWeapons(){
     damageMin = 0;
     damageMax = 100;
   }
+}
+
+/* ---- Always fetch the “real” weapon stats from weapons.json ---- */
+function canonicalName(name){
+  return String(name || "").trim().toLowerCase();
+}
+
+function getWeaponByName(name){
+  const key = canonicalName(name);
+  return weapons.find(w => canonicalName(w.name) === key) || null;
 }
 
 /* -------- Image resolver -------- */
@@ -71,7 +86,6 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
-    // known messy ones
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -86,7 +100,6 @@ function starsHTML(stars){ return "★".repeat(stars || 0); }
 
 /* -------- Damage bar helpers -------- */
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
-
 function damagePct(dmg){
   const v = Number(dmg);
   if (!Number.isFinite(v)) return 0;
@@ -95,17 +108,15 @@ function damagePct(dmg){
 }
 
 function ensureDamageBar(){
-  // Inject a bar into the modal if it isn't already there
-  // This avoids editing index.html again.
-  if (document.getElementById("damageBarWrap")) return;
+  if (barWrap) return;
 
-  const bar = document.createElement("div");
-  bar.id = "damageBarWrap";
-  bar.style.marginTop = "10px";
-  bar.style.display = "grid";
-  bar.style.gap = "8px";
+  barWrap = document.createElement("div");
+  barWrap.id = "damageBarWrap";
+  barWrap.style.marginTop = "10px";
+  barWrap.style.display = "grid";
+  barWrap.style.gap = "8px";
 
-  bar.innerHTML = `
+  barWrap.innerHTML = `
     <div style="display:flex; justify-content:space-between; gap:12px; font-size:12px; letter-spacing:.14em; color:rgba(255,255,255,.72);">
       <div>Damage</div>
       <div id="damageBarValue" style="color:rgba(255,255,255,.92); font-weight:700;">0</div>
@@ -114,46 +125,52 @@ function ensureDamageBar(){
       <div id="damageBarFill" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(255,45,59,.85), rgba(255,200,90,.75));"></div>
     </div>
     <div style="display:flex; justify-content:space-between; font-size:11px; letter-spacing:.12em; color:rgba(255,255,255,.55);">
-      <div id="damageBarMin">${damageMin}</div>
-      <div id="damageBarMax">${damageMax}</div>
+      <div id="damageBarMin">0</div>
+      <div id="damageBarMax">100</div>
     </div>
   `;
 
-  // Put the bar under the title area
   const top = document.querySelector(".modalTop");
-  if (top && top.parentElement) top.parentElement.insertBefore(bar, top.nextSibling);
+  if (top && top.parentElement) top.parentElement.insertBefore(barWrap, top.nextSibling);
+
+  barFill = document.getElementById("damageBarFill");
+  barVal  = document.getElementById("damageBarValue");
+  barMin  = document.getElementById("damageBarMin");
+  barMax  = document.getElementById("damageBarMax");
 }
 
-/* -------- Inspect modal (shows damage + bar) -------- */
-function openInspect(w){
+/* -------- Inspect modal (ALWAYS uses weapons.json stats) -------- */
+function openInspect(anyWeaponObj){
   ensureDamageBar();
+
+  // ✅ Lookup real weapon from JSON by name
+  const real = getWeaponByName(anyWeaponObj?.name) || anyWeaponObj;
 
   inspectModal.classList.add("show");
   inspectModal.setAttribute("aria-hidden","false");
 
-  modalTier.textContent = `Tier ${w.tier}`;
-  modalTier.className = `modalTier tier-${w.tier}`;
-  modalName.textContent = w.name;
+  modalTier.textContent = `Tier ${real.tier ?? "?"}`;
+  modalTier.className = `modalTier tier-${real.tier ?? "S"}`;
+  modalName.textContent = real.name ?? "Unknown";
 
-  const dmgText = (w.damage != null) ? `Damage: ${w.damage}` : `Damage: N/A`;
-  const frText  = w.fireRate ? `Fire Rate: ${w.fireRate}` : `Fire Rate: N/A`;
-  modalStats.textContent = `${dmgText} • ${frText}`;
+  // ✅ Pull from weapons.json (real.damage, real.fireRate)
+  const dmg = Number.isFinite(Number(real.damage)) ? Number(real.damage) : null;
+  const fr  = real.fireRate ? String(real.fireRate) : null;
 
-  modalStars.textContent = starsHTML(w.stars || 0);
+  modalStats.textContent =
+    `Damage: ${dmg !== null ? dmg : "N/A"} • Fire Rate: ${fr ?? "N/A"}`;
 
-  // update bar
-  const pct = damagePct(w.damage);
-  const fill = document.getElementById("damageBarFill");
-  const val = document.getElementById("damageBarValue");
-  const minEl = document.getElementById("damageBarMin");
-  const maxEl = document.getElementById("damageBarMax");
-  if (fill) fill.style.width = `${Math.round(pct * 100)}%`;
-  if (val) val.textContent = (w.damage != null ? w.damage : "N/A");
-  if (minEl) minEl.textContent = String(damageMin);
-  if (maxEl) maxEl.textContent = String(damageMax);
+  modalStars.textContent = starsHTML(real.stars || 0);
+
+  // ✅ Update bar with real.damage
+  const pct = damagePct(dmg);
+  if (barFill) barFill.style.width = `${Math.round(pct * 100)}%`;
+  if (barVal)  barVal.textContent = (dmg !== null ? String(dmg) : "N/A");
+  if (barMin)  barMin.textContent = String(damageMin);
+  if (barMax)  barMax.textContent = String(damageMax);
 
   // image
-  const candidates = imageCandidates(w.name);
+  const candidates = imageCandidates(real.name || "");
   let i = 0;
   const tryNext = () => {
     if (i >= candidates.length) {
@@ -207,6 +224,7 @@ function makeCard(w){
   img.onerror = tryNext;
   tryNext();
 
+  // ✅ Click uses openInspect which looks up stats in weapons.json
   div.addEventListener("click", () => openInspect(w));
   return div;
 }
@@ -228,17 +246,10 @@ function tierConfig(tierName){
   if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
   if (tierName === "Tier 1")     return { count: 4, mode: "normal", pool: SA, visual: SA };
 
-  // ✅ Tier 1.5 = MOSTLY B/F, small chance S/A
-  if (tierName === "Tier 1.5")   return {
-    count: 4,
-    mode: "weighted",
-    SA,
-    BF,
-    pSA: 0.15,           // 15% chance to roll S/A
-    visual: BF.concat(SA)
-  };
+  // Tier 1.5: mostly BF, small SA
+  if (tierName === "Tier 1.5")   return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
 
-  // ✅ Tier 2 = ONLY B/F (spin + visuals)
+  // Tier 2: ONLY BF
   if (tierName === "Tier 2")     return { count: 6, mode: "normal", pool: BF, visual: BF };
 
   if (tierName === "Refill")     return { count: 1, mode: "normal", pool: weapons, visual: weapons };
@@ -246,9 +257,7 @@ function tierConfig(tierName){
 }
 
 function pickWinner(cfg){
-  if (cfg.mode === "weighted") {
-    return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
-  }
+  if (cfg.mode === "weighted") return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
   return pickRandom(cfg.pool);
 }
 
@@ -287,7 +296,7 @@ function addDrop(w){ dropsDiv.appendChild(makeCard(w)); }
 /* -------- Filters -------- */
 function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
 function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
-function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }  // T2 view ONLY B/F
+function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
 function filterAll(){ return weapons; }
 
 /* -------- Transition helpers -------- */
@@ -298,7 +307,6 @@ function setActiveButton(btn){
 
 function switchGrid(list, activeBtn){
   if (activeBtn) setActiveButton(activeBtn);
-
   allWeaponsDiv.classList.add("is-switching");
   setTimeout(() => {
     renderGrid(allWeaponsDiv, list);
@@ -328,8 +336,6 @@ spinBtn.addEventListener("click", async () => {
   const used = new Set();
   for (let i = 0; i < count; i++) {
     let winner = pickWinner(cfg);
-
-    // avoid duplicates if possible
     let tries = 0;
     while (used.has(winner.name) && tries < 25) {
       winner = pickWinner(cfg);
@@ -354,7 +360,7 @@ showAllBtn.addEventListener("click", () => switchGrid(filterAll(), showAllBtn));
 searchInput.addEventListener("input", (e) => {
   const q = e.target.value.trim().toLowerCase();
   if (!q) return switchGrid(filterAll(), showAllBtn);
-  switchGrid(weapons.filter(w => w.name.toLowerCase().includes(q)), null);
+  switchGrid(weapons.filter(w => String(w.name).toLowerCase().includes(q)), null);
 });
 
 /* -------- Init -------- */
