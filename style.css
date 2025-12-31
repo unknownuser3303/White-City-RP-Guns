@@ -1,356 +1,434 @@
-/* ================================
-   White City RP Guns - style.css
-   Background + full site framing
-   Paste ALL (replace your css)
-================================== */
+/* =========================================================
+   White City RP Guns — CLEAN DARK UI (Better Layout)
+   Replace your ENTIRE style.css with this.
+   ========================================================= */
 
-/* ---- Reset / base ---- */
+/* ---------- Reset ---------- */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
   margin: 0;
-  color: rgba(255,255,255,.92);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: rgba(255,255,255,.92);
+  background: #070710;
   overflow-x: hidden;
-
-  /* layered background */
-  background:
-    radial-gradient(1200px 700px at 50% -10%, rgba(155, 80, 255, .20), transparent 60%),
-    radial-gradient(900px 600px at 20% 20%, rgba(60, 220, 255, .14), transparent 55%),
-    radial-gradient(900px 600px at 80% 35%, rgba(60, 255, 160, .10), transparent 60%),
-    radial-gradient(800px 800px at 50% 110%, rgba(255, 70, 140, .10), transparent 60%),
-    linear-gradient(180deg, #06060a 0%, #070716 35%, #050510 100%);
 }
 
-/* animated soft noise / glow */
-body::before {
-  content: "";
+/* ---------- Background (premium, not washed-out) ---------- */
+body::before{
+  content:"";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(900px 450px at 50% 10%, rgba(255,255,255,.06), transparent 60%),
-    radial-gradient(700px 350px at 10% 80%, rgba(150,120,255,.08), transparent 65%),
-    radial-gradient(700px 350px at 90% 70%, rgba(50,220,255,.06), transparent 65%);
-  filter: blur(0.2px);
-  opacity: .9;
-  animation: floatGlow 12s ease-in-out infinite alternate;
+    radial-gradient(900px 520px at 20% 10%, rgba(140,80,255,.18), transparent 60%),
+    radial-gradient(900px 520px at 80% 15%, rgba(0,190,255,.12), transparent 62%),
+    radial-gradient(900px 520px at 50% 110%, rgba(40,255,170,.10), transparent 60%),
+    linear-gradient(180deg, #070710 0%, #060612 55%, #05050e 100%);
 }
 
-@keyframes floatGlow {
-  from { transform: translate3d(0,0,0); opacity: .75; }
-  to   { transform: translate3d(0,-14px,0); opacity: .95; }
+/* subtle vignette so it looks “framed” */
+body::after{
+  content:"";
+  position: fixed;
+  inset: -2px;
+  pointer-events:none;
+  background: radial-gradient(1200px 800px at 50% 40%, transparent 60%, rgba(0,0,0,.55) 100%);
 }
 
-/* ---- Centered frame around website ---- */
-.wrapper {
-  width: min(1200px, calc(100% - 36px));
-  margin: 22px auto 44px;
-  padding: 18px;
+/* =========================================================
+   LAYOUT
+   We style your existing page without requiring big HTML changes.
+   If you already have .wrapper, great. If not, this still works.
+   ========================================================= */
+
+/* Give the whole page a centered width */
+.wrapper{
+  width: min(1250px, calc(100% - 28px));
+  margin: 18px auto 38px;
+}
+
+/* Main “app shell” (left controls + right content) */
+.appShell{
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 980px){
+  .appShell{ grid-template-columns: 1fr; }
+}
+
+/* ---------- Top Banner / Header ---------- */
+header{
   border-radius: 18px;
-
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255,255,255,.10);
   background:
     linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  border: 1px solid rgba(255,255,255,.12);
   box-shadow:
-    0 20px 60px rgba(0,0,0,.55),
+    0 18px 50px rgba(0,0,0,.55),
     0 0 0 1px rgba(255,255,255,.06) inset;
   backdrop-filter: blur(10px);
 }
 
-/* inner panel style */
-.panel {
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.28);
-  box-shadow: 0 10px 25px rgba(0,0,0,.35);
-}
-
-/* ---- Header / brand ---- */
-header {
-  display: flex;
-  gap: 16px;
-  align-items: center;
+.headerRow{
+  display:flex;
+  align-items:center;
   justify-content: space-between;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-.brand img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
+.brand{
+  display:flex;
+  gap: 12px;
+  align-items:center;
 }
 
-.brand h1 {
-  margin: 0;
-  font-size: 18px;
+.brand img{
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 14px 28px rgba(0,0,0,.45);
+}
+
+.brandText .title{
+  font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255,255,255,.95);
 }
 
-.brand .sub {
-  margin: 2px 0 0;
+.brandText .sub{
+  margin: 6px 0 0;
   font-size: 12px;
-  letter-spacing: .12em;
+  letter-spacing: .14em;
+  text-transform: uppercase;
   color: rgba(255,255,255,.62);
-  text-transform: uppercase;
 }
 
-/* ---- Buttons / controls ---- */
-.controlsRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
+/* ---------- Panels ---------- */
+.panel{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.30);
+  box-shadow:
+    0 18px 45px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.06) inset;
+  backdrop-filter: blur(10px);
 }
 
-select, input[type="text"] {
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  outline: none;
-  color: rgba(255,255,255,.9);
-  background: rgba(0,0,0,.35);
-  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+/* Left sidebar */
+.sidebar{
+  position: sticky;
+  top: 14px;
+  padding: 14px;
 }
 
-select:focus, input[type="text"]:focus {
-  border-color: rgba(180,120,255,.55);
-  box-shadow: 0 0 0 3px rgba(180,120,255,.14), 0 10px 22px rgba(0,0,0,.35);
+@media (max-width: 980px){
+  .sidebar{ position: static; }
 }
 
-button {
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(180,120,255,.55);
-  background: rgba(120,60,255,.16);
-  color: rgba(255,255,255,.92);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  font-size: 12px;
-  cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0,0,0,.30);
-  transition: transform .15s ease, background .15s ease, border-color .15s ease;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  background: rgba(120,60,255,.24);
-  border-color: rgba(200,150,255,.8);
-}
-
-button:active { transform: translateY(0px) scale(.99); }
-button:disabled { opacity: .5; cursor: not-allowed; }
-
-/* active state for section buttons */
-.is-active {
-  background: rgba(60,220,255,.14);
-  border-color: rgba(60,220,255,.65);
-}
-
-/* ---- Layout sections ---- */
-.sectionTitle {
-  margin: 16px 0 10px;
+.groupTitle{
+  margin: 0 0 10px;
   font-size: 12px;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.75);
+  color: rgba(255,255,255,.72);
 }
 
-.row {
-  display: grid;
-  gap: 14px;
-}
+.stack{ display: grid; gap: 10px; }
 
-@media (min-width: 900px) {
-  .row.cols2 { grid-template-columns: 340px 1fr; }
-}
-
-/* ---- Sidebar button panel ---- */
-.sidebar {
+/* Right main content */
+.main{
   padding: 14px;
 }
 
-.sidebar .groupTitle {
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+label{
   font-size: 12px;
-  letter-spacing: .16em;
+  letter-spacing: .14em;
   text-transform: uppercase;
   color: rgba(255,255,255,.70);
-  margin: 0 0 10px;
 }
 
-.sidebar .stack {
-  display: grid;
+.controlRow{
+  display:flex;
   gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
 }
 
-/* ---- CSGO roll area ---- */
-.rollArea {
+select, input[type="text"]{
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(10,10,18,.55);
+  color: rgba(255,255,255,.92);
+  outline: none;
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+}
+
+select:focus, input[type="text"]:focus{
+  border-color: rgba(160,120,255,.60);
+  box-shadow: 0 0 0 3px rgba(160,120,255,.16), 0 12px 26px rgba(0,0,0,.45);
+}
+
+button{
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(170,120,255,.60);
+  background: linear-gradient(180deg, rgba(120,60,255,.26), rgba(120,60,255,.12));
+  color: rgba(255,255,255,.92);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(0,0,0,.40);
+  transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+}
+
+button:hover{
+  transform: translateY(-1px);
+  border-color: rgba(210,170,255,.85);
+  background: linear-gradient(180deg, rgba(120,60,255,.34), rgba(120,60,255,.14));
+  box-shadow: 0 16px 34px rgba(0,0,0,.50);
+}
+
+button:active{ transform: translateY(0px) scale(.99); }
+button:disabled{ opacity:.55; cursor:not-allowed; }
+
+/* active “section” button */
+.is-active{
+  border-color: rgba(80,230,255,.75) !important;
+  background: linear-gradient(180deg, rgba(80,230,255,.22), rgba(80,230,255,.10)) !important;
+}
+
+/* =========================================================
+   TITLES / TEXT
+   ========================================================= */
+.sectionTitle{
+  margin: 12px 0 10px;
+  font-size: 12px;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.70);
+}
+
+#status{
+  margin-top: 8px;
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.62);
+}
+
+/* =========================================================
+   CSGO ROLL STRIP (fixes “spread across website”)
+   ========================================================= */
+.rollWrap{
   padding: 14px;
 }
 
-.mask {
+.mask{
   position: relative;
   overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.30);
-  box-shadow: 0 12px 30px rgba(0,0,0,.45);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.25));
+  box-shadow: 0 16px 40px rgba(0,0,0,.55);
+}
+
+/* left/right fade so it looks like a real case opening */
+.mask::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,
+      rgba(5,5,12,.95) 0%,
+      rgba(5,5,12,0) 14%,
+      rgba(5,5,12,0) 86%,
+      rgba(5,5,12,.95) 100%);
+  z-index: 3;
 }
 
 /* center marker line */
-.mask::after {
-  content: "";
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
+.mask::after{
+  content:"";
+  position:absolute;
+  top: 14px;
+  bottom: 14px;
   left: 50%;
   width: 4px;
   transform: translateX(-50%);
-  background: linear-gradient(180deg, transparent, rgba(255,255,255,.65), transparent);
-  box-shadow: 0 0 14px rgba(255,255,255,.22);
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.85), transparent);
+  box-shadow: 0 0 18px rgba(255,255,255,.22);
   border-radius: 999px;
-  pointer-events: none;
+  z-index: 4;
 }
 
-#strip {
-  display: flex;
+#strip{
+  display:flex;
   gap: 12px;
-  padding: 18px;
+  padding: 18px 18px;
   will-change: transform;
+  align-items: center;
 }
 
-/* drops area */
-#drops {
-  display: flex;
+/* =========================================================
+   DROPS
+   ========================================================= */
+#drops{
+  display:flex;
   flex-wrap: wrap;
   gap: 12px;
   padding: 10px 0 0;
 }
 
-/* status line */
-#status {
-  margin-top: 10px;
-  font-size: 12px;
-  letter-spacing: .12em;
-  color: rgba(255,255,255,.62);
-}
-
-/* ---- Weapons grid ---- */
-#allWeapons {
+/* =========================================================
+   GRID (All Weapons)
+   ========================================================= */
+#allWeapons{
   padding: 14px;
-  display: grid;
+  display:grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   transition: opacity .22s ease, transform .22s ease;
 }
 
-#allWeapons.is-switching {
+#allWeapons.is-switching{
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(8px);
 }
 
-/* ---- Weapon cards ---- */
-.card {
+/* =========================================================
+   CARD LOOK (bigger, cleaner)
+   ========================================================= */
+.card{
   position: relative;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.25);
+  background: rgba(0,0,0,.28);
   overflow: hidden;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(0,0,0,.35);
-  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  box-shadow: 0 14px 30px rgba(0,0,0,.45);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
 }
 
-.card:hover {
+.card:hover{
   transform: translateY(-2px);
-  border-color: rgba(255,255,255,.18);
-  box-shadow: 0 16px 30px rgba(0,0,0,.45);
+  border-color: rgba(255,255,255,.16);
+  box-shadow: 0 18px 42px rgba(0,0,0,.55);
 }
 
-.cardName {
-  padding: 10px 10px 0;
+.cardName{
+  padding: 10px 12px 0;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: .10em;
+  font-weight: 800;
+  letter-spacing: .12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.9);
+  color: rgba(255,255,255,.94);
 }
 
-.cardImgWrap {
-  padding: 10px;
-  display: grid;
-  place-items: center;
+.cardImgWrap{
+  padding: 12px;
+  display:grid;
+  place-items:center;
 }
 
-.cardImgWrap img {
+.cardImgWrap img{
   width: 100%;
-  max-width: 150px;
-  aspect-ratio: 1 / 1;
+  max-width: 170px;
+  aspect-ratio: 1/1;
   object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  box-shadow: 0 12px 24px rgba(0,0,0,.45);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 16px 34px rgba(0,0,0,.55);
 }
 
-.cardStars {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
+/* Stars bottom-right */
+.cardStars{
+  position:absolute;
+  right: 12px;
+  bottom: 12px;
   font-size: 14px;
-  letter-spacing: .18em;
+  letter-spacing: .22em;
   color: rgba(255,255,255,.92);
-  text-shadow: 0 6px 18px rgba(0,0,0,.65);
+  text-shadow: 0 10px 25px rgba(0,0,0,.70);
 }
 
-/* ---- Tier glow accents ---- */
-.tier-S { border-left: 4px solid rgba(60, 255, 160, .75); }
-.tier-A { border-left: 4px solid rgba(60, 220, 255, .75); }
-.tier-B { border-left: 4px solid rgba(180, 90, 255, .75); }
-.tier-F { border-left: 4px solid rgba(255, 205, 80, .85); }
+/* Tier accent: a soft glow top border + left */
+.tier-S{ box-shadow: 0 0 0 1px rgba(60,255,160,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
+.tier-A{ box-shadow: 0 0 0 1px rgba(60,220,255,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
+.tier-B{ box-shadow: 0 0 0 1px rgba(180,90,255,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
+.tier-F{ box-shadow: 0 0 0 1px rgba(255,205,80,.14) inset, 0 14px 30px rgba(0,0,0,.45); }
 
-/* ---- Modal ---- */
-#inspectModal {
+.tier-S::before,
+.tier-A::before,
+.tier-B::before,
+.tier-F::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  pointer-events:none;
+  opacity: .9;
+  border-radius: 16px;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
+}
+
+.tier-S::before{ border-top-color: rgba(60,255,160,.65); border-left-color: rgba(60,255,160,.55); }
+.tier-A::before{ border-top-color: rgba(60,220,255,.65); border-left-color: rgba(60,220,255,.55); }
+.tier-B::before{ border-top-color: rgba(180,90,255,.65); border-left-color: rgba(180,90,255,.55); }
+.tier-F::before{ border-top-color: rgba(255,205,80,.70); border-left-color: rgba(255,205,80,.60); }
+
+/* =========================================================
+   MODAL (inspect)
+   ========================================================= */
+#inspectModal{
   position: fixed;
   inset: 0;
   display: none;
   place-items: center;
   padding: 18px;
   background: rgba(0,0,0,.65);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
   z-index: 9999;
 }
-#inspectModal.show { display: grid; }
+#inspectModal.show{ display:grid; }
 
-.modalCard {
-  width: min(900px, 100%);
+.modalCard{
+  width: min(920px, 100%);
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(10,10,18,.86);
-  box-shadow: 0 30px 90px rgba(0,0,0,.65);
-  overflow: hidden;
+  background: rgba(12,12,22,.88);
+  box-shadow: 0 30px 90px rgba(0,0,0,.70);
+  overflow:hidden;
 }
 
-.modalTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 14px 10px;
+.modalTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-.modalTier {
+.modalTier{
   font-size: 12px;
   letter-spacing: .18em;
   text-transform: uppercase;
@@ -360,83 +438,87 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   background: rgba(255,255,255,.06);
 }
 
-.modalTier.tier-S { border-color: rgba(60,255,160,.45); }
-.modalTier.tier-A { border-color: rgba(60,220,255,.45); }
-.modalTier.tier-B { border-color: rgba(180,90,255,.45); }
-.modalTier.tier-F { border-color: rgba(255,205,80,.55); }
+.modalClose{ display:flex; gap: 10px; }
 
-.modalClose {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-#modalX, #modalClose {
-  height: 36px;
-  width: 36px;
+#modalX, #modalClose{
+  height: 36px; width: 36px;
   padding: 0;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
 }
+#modalX:hover, #modalClose:hover{ background: rgba(255,255,255,.10); }
 
-#modalX:hover, #modalClose:hover {
-  background: rgba(255,255,255,.10);
-}
-
-.modalBody {
-  display: grid;
+.modalBody{
+  display:grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
   padding: 14px;
 }
-@media (max-width: 720px) {
-  .modalBody { grid-template-columns: 1fr; }
+@media (max-width: 760px){
+  .modalBody{ grid-template-columns: 1fr; }
 }
 
-.modalLeft h2 {
+.modalLeft h2{
   margin: 0;
-  font-size: 20px;
-  letter-spacing: .08em;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 
-#modalStats {
-  margin-top: 6px;
-  color: rgba(255,255,255,.72);
-  letter-spacing: .08em;
+#modalStats{
+  margin-top: 8px;
   font-size: 12px;
+  letter-spacing: .10em;
+  color: rgba(255,255,255,.72);
 }
 
-#modalStars {
+#modalStars{
   margin-top: 10px;
-  letter-spacing: .25em;
   font-size: 18px;
+  letter-spacing: .25em;
   color: rgba(255,255,255,.92);
 }
 
-.modalRight {
-  display: grid;
-  place-items: center;
+.modalRight{
+  display:grid;
+  place-items:center;
   padding: 10px;
 }
 
-#modalImg {
+#modalImg{
   width: 100%;
-  max-width: 380px;
-  aspect-ratio: 1 / 1;
+  max-width: 420px;
+  aspect-ratio: 1/1;
   object-fit: cover;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,.12);
-  box-shadow: 0 18px 40px rgba(0,0,0,.55);
+  box-shadow: 0 18px 45px rgba(0,0,0,.60);
 }
 
-/* ---- Footer ---- */
-footer {
-  margin-top: 18px;
-  padding: 10px 2px 0;
+/* =========================================================
+   OPTIONAL: keep small text from hugging edges
+   ========================================================= */
+footer{
+  margin-top: 14px;
+  text-align:center;
   font-size: 12px;
   letter-spacing: .12em;
   color: rgba(255,255,255,.55);
-  text-align: center;
+}
+
+/* =========================================================
+   QUICK FIX: Your current screenshot shows huge empty space
+   That usually happens when content isn’t inside a centered wrapper
+   Use these helper rules to force sane widths.
+   ========================================================= */
+main, .content, .container{
+  width: 100%;
+}
+
+/* If you have elements like #app or .app, keep them centered */
+#app, .app{
+  width: min(1250px, calc(100% - 28px));
+  margin: 0 auto;
 }
