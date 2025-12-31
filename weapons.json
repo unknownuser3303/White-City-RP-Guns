@@ -15,17 +15,19 @@
   { "name": "OliveGlock19x", "tier": "S", "damage": 38, "fireRate": "Medium" },
   { "name": "Walther P88", "tier": "S", "damage": 34, "fireRate": "Medium" },
   { "name": "SigP320", "tier": "S", "damage": 40, "fireRate": "Medium" },
+
   { "name": "Glock 19 switch", "tier": "B", "damage": 55, "fireRate": "Very High" },
   { "name": "Glock43mos", "tier": "B", "damage": 32, "fireRate": "Low" },
   { "name": "Glock45MOS", "tier": "B", "damage": 38, "fireRate": "Medium" },
   { "name": "Glock19Switch", "tier": "B", "damage": 55, "fireRate": "Very High" },
-  { "name": "ArpBinary", "tier": "F", "damage": 60, "fireRate": "Very High" },
-  { "name": "OliveDraco", "tier": "F", "damage": 70, "fireRate": "High" },
-  { "name": "Draco", "tier": "F", "damage": 70, "fireRate": "High" },
-  { "name": "Fn57", "tier": "B", "damage": 45, "fireRate": "High" },
+  { "name": "Fn57 (B)", "tier": "B", "damage": 45, "fireRate": "High" },
   { "name": "Fnx45", "tier": "B", "damage": 50, "fireRate": "Medium" },
   { "name": "G26 Switch", "tier": "B", "damage": 55, "fireRate": "Very High" },
   { "name": "G20 Switch", "tier": "B", "damage": 65, "fireRate": "Very High" },
+
+  { "name": "ArpBinary", "tier": "F", "damage": 60, "fireRate": "Very High" },
+  { "name": "OliveDraco", "tier": "F", "damage": 70, "fireRate": "High" },
+  { "name": "Draco", "tier": "F", "damage": 70, "fireRate": "High" },
   { "name": "KrissVector", "tier": "F", "damage": 58, "fireRate": "Very High" },
   { "name": "MAC10", "tier": "F", "damage": 50, "fireRate": "Very High" },
   { "name": "SigMCX", "tier": "F", "damage": 62, "fireRate": "High" }
