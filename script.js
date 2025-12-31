@@ -1,194 +1,102 @@
-// ====== EDIT THIS LIST if you want ======
-// IMPORTANT: these paths must exist in your repo under /images/weapons/
 const weapons = [
-  { name: "1911", tier: "A", fireRate: "Low", img: "images/weapons/1911.webp", stars: 1 },
-  { name: "CanikTP9", tier: "S", fireRate: "Medium", img: "images/weapons/CanikTP9.webp", stars: 2 },
-  { name: "Glock45", tier: "S", fireRate: "Medium", img: "images/weapons/Glock45.webp", stars: 2 },
-  { name: "Glock19x", tier: "S", fireRate: "Medium", img: "images/weapons/Glock19x.webp", stars: 2 },
-  { name: "Fn57", tier: "A", fireRate: "High", img: "images/weapons/Fn57.png", stars: 1 },
-  { name: "GlockG17Gen5", tier: "S", fireRate: "Medium", img: "images/weapons/GlockG17Gen5.webp", stars: 2 },
-  { name: "Glock19", tier: "S", fireRate: "Medium", img: "images/weapons/Glock19.webp", stars: 2 },
-  { name: "Glock43", tier: "S", fireRate: "Low", img: "images/weapons/Glock43.webp", stars: 2 },
-  { name: "Glock23", tier: "S", fireRate: "Medium", img: "images/weapons/Glock23.webp", stars: 2 },
-  { name: "G45", tier: "A", fireRate: "Medium", img: "images/weapons/G45.webp", stars: 1 },
-
-  { name: "HK45", tier: "S", fireRate: "Low", img: "images/weapons/HK45.webp", stars: 2 },
-  { name: "Glock19 Foregrip", tier: "B", fireRate: "Medium", img: "images/weapons/Glock19 Foregrip.webp", stars: 4 },
-  { name: "OliveGlock17", tier: "S", fireRate: "Medium", img: "images/weapons/OliveGlock17.webp", stars: 2 },
-  { name: "OliveGlock19x", tier: "S", fireRate: "Medium", img: "images/weapons/OliveGlock19x.webp", stars: 2 },
-  { name: "Walther P88", tier: "S", fireRate: "Medium", img: "images/weapons/Walther P88.webp", stars: 2 },
-  { name: "SigP320", tier: "S", fireRate: "Medium", img: "images/weapons/SigP320.webp", stars: 1 },
-
-  { name: "Glock 19 switch", tier: "B", fireRate: "Very High", img: "images/weapons/Glock 19 switch.png", stars: 4 },
-  { name: "Glock43mos", tier: "B", fireRate: "Low", img: "images/weapons/Glock43mos.webp", stars: 4 },
-  { name: "Glock45MOS", tier: "B", fireRate: "Medium", img: "images/weapons/Glock45MOS.webp", stars: 4 },
-  { name: "Glock19Switch", tier: "B", fireRate: "Very High", img: "images/weapons/Glock19Switch.webp", stars: 4 },
-
-  { name: "Fn57 (B)", tier: "B", fireRate: "High", img: "images/weapons/Fn57 (B).webp", stars: 4 },
-  { name: "Fnx45", tier: "B", fireRate: "Medium", img: "images/weapons/Fnx45.webp", stars: 4 },
-  { name: "G26 Switch", tier: "B", fireRate: "Very High", img: "images/weapons/G26 Switch.webp", stars: 4 },
-  { name: "G20 Switch", tier: "B", fireRate: "Very High", img: "images/weapons/G20 Switch.webp", stars: 4 },
-
-  { name: "ArpBinary", tier: "F", fireRate: "Very High", img: "images/weapons/ArpBinary.webp", stars: 5 },
-  { name: "OliveDraco", tier: "F", fireRate: "High", img: "images/weapons/OliveDraco.webp", stars: 5 },
-  { name: "Draco", tier: "F", fireRate: "High", img: "images/weapons/Draco.webp", stars: 5 },
-  { name: "KrissVector", tier: "F", fireRate: "Very High", img: "images/weapons/KrissVector.webp", stars: 5 },
-  { name: "MAC10", tier: "F", fireRate: "Very High", img: "images/weapons/MAC10.webp", stars: 4 },
-  { name: "SigMCX", tier: "F", fireRate: "High", img: "images/weapons/SigMCX.webp", stars: 5 }
+  { n:"1911", t:"A", s:1 },
+  { n:"CanikTP9", t:"S", s:2 },
+  { n:"Glock45", t:"S", s:2 },
+  { n:"Glock19x", t:"S", s:2 },
+  { n:"Fn57", t:"A", s:1 },
+  { n:"GlockG17Gen5", t:"S", s:2 },
+  { n:"Glock19", t:"S", s:2 },
+  { n:"Glock43", t:"S", s:2 },
+  { n:"Glock23", t:"S", s:2 },
+  { n:"G45", t:"A", s:1 },
+  { n:"HK45", t:"S", s:2 },
+  { n:"Glock19 Foregrip", t:"B", s:4 },
+  { n:"OliveGlock17", t:"S", s:2 },
+  { n:"OliveGlock19x", t:"S", s:2 },
+  { n:"Walther P88", t:"S", s:2 },
+  { n:"SigP320", t:"S", s:1 },
+  { n:"Glock 19 switch", t:"B", s:4 },
+  { n:"Glock43mos", t:"B", s:4 },
+  { n:"Glock45MOS", t:"B", s:4 },
+  { n:"Glock19Switch", t:"B", s:4 },
+  { n:"Fn57 (B)", t:"B", s:4 },
+  { n:"Fnx45", t:"B", s:4 },
+  { n:"G26 Switch", t:"B", s:4 },
+  { n:"G20 Switch", t:"B", s:4 },
+  { n:"ArpBinary", t:"F", s:5 },
+  { n:"OliveDraco", t:"F", s:5 },
+  { n:"Draco", t:"F", s:5 },
+  { n:"KrissVector", t:"F", s:5 },
+  { n:"MAC10", t:"F", s:4 },
+  { n:"SigMCX", t:"F", s:5 }
 ];
 
-const $ = (id) => document.getElementById(id);
+const strip = document.getElementById("strip");
+const dropsDiv = document.getElementById("drops");
+const status = document.getElementById("status");
 
-function setStatus(msg) { $("status").textContent = msg; }
-
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[m]));
+function slug(n){
+  return n.toLowerCase()
+    .replace("(b)","b")
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-|-$/g,"");
 }
 
-function makeCard(w, extraClass = "") {
-  const div = document.createElement("div");
-  div.className = `card tier-${w.tier} ${extraClass}`.trim();
+function imgPath(w){
+  return `images/weapons/${slug(w.n)}.${w.n.includes("switch") ? "png" : "webp"}`;
+}
 
-  div.innerHTML = `
-    <div class="cardName">${escapeHtml(w.name)}</div>
-    <div class="cardImgWrap">
-      <img src="${escapeHtml(w.img)}" alt="${escapeHtml(w.name)}">
+function card(w){
+  return `
+    <div class="card tier-${w.t}">
+      <div class="cardName">${w.n}</div>
+      <img src="${imgPath(w)}">
+      <div class="cardStars">${"★".repeat(w.s)}</div>
     </div>
-    <div class="cardStars">${"★".repeat(w.stars || 0)}</div>
   `;
-  return div;
 }
 
-function renderAll(list) {
-  const root = $("allWeapons");
-  root.innerHTML = "";
-  list.forEach(w => root.appendChild(makeCard(w, "dropCard")));
+function pick(list,n){
+  const a=[...list], o=[];
+  while(o.length<n) o.push(a.splice(Math.random()*a.length|0,1)[0]);
+  return o;
 }
 
-function renderDrops(list) {
-  const root = $("drops");
-  root.innerHTML = "";
-  list.forEach(w => root.appendChild(makeCard(w, "dropCard")));
-}
+document.getElementById("spinBtn").onclick = async () => {
+  strip.innerHTML="";
+  dropsDiv.innerHTML="";
+  status.textContent="Rolling...";
 
-// ===== Tier Rules (edit if you want) =====
-function pickRandomFrom(list, n) {
-  const pool = [...list];
-  const out = [];
-  while (out.length < n && pool.length) {
-    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  }
-  return out;
-}
+  const tier = document.getElementById("tierSelect").value;
 
-function getDropList(tierName) {
-  // You can change these rules anytime
-  if (tierName === "Test Drops") {
-    return pickRandomFrom(weapons.filter(w => ["S","A"].includes(w.tier)), 2);
-  }
-  if (tierName === "Tier 1") {
-    // 4 drops from S/A only
-    return pickRandomFrom(weapons.filter(w => ["S","A"].includes(w.tier)), 4);
-  }
-  if (tierName === "Tier 1.5") {
-    return pickRandomFrom(weapons.filter(w => ["F","B"].includes(w.tier)), 4);
-  }
-  if (tierName === "Tier 2") {
-    return pickRandomFrom(weapons, 6);
-  }
-  if (tierName === "Refill") {
-    return pickRandomFrom(weapons, 1);
-  }
-  return pickRandomFrom(weapons, 1);
-}
+  let pool = weapons;
+  let count = 1;
 
-// ===== REAL CS:GO ROLL =====
-// Builds a long strip of items and animates translateX until the WINNER is under the center marker.
-function csgoRollOnce(winner, poolForVisual) {
-  const strip = $("strip");
-  const mask = document.querySelector(".stripMask");
+  if(tier==="Test Drops"){ pool=weapons.filter(w=>w.t==="S"||w.t==="A"); count=2; }
+  if(tier==="Tier 1"){ pool=weapons.filter(w=>w.t==="S"||w.t==="A"); count=4; }
+  if(tier==="Tier 1.5"){ pool=weapons.filter(w=>w.t==="B"||w.t==="F"); count=4; }
+  if(tier==="Tier 2"){ count=6; }
 
-  // How many items in strip
-  const PRE = 40;   // items before winner
-  const POST = 12;  // items after winner
-  const TOTAL = PRE + 1 + POST;
+  const drops = pick(pool,count);
 
-  // Build strip list
-  const rollItems = [];
-  for (let i = 0; i < PRE; i++) {
-    rollItems.push(poolForVisual[Math.floor(Math.random() * poolForVisual.length)]);
-  }
-  rollItems.push(winner);
-  for (let i = 0; i < POST; i++) {
-    rollItems.push(poolForVisual[Math.floor(Math.random() * poolForVisual.length)]);
-  }
+  const roll=[];
+  for(let i=0;i<40;i++) roll.push(pool[Math.random()*pool.length|0]);
+  roll.push(drops[0]);
+  for(let i=0;i<12;i++) roll.push(pool[Math.random()*pool.length|0]);
 
-  // Render
-  strip.innerHTML = "";
-  rollItems.forEach(w => strip.appendChild(makeCard(w)));
+  roll.forEach(w=>strip.insertAdjacentHTML("beforeend",card(w)));
 
-  // Reset transform instantly
-  strip.style.transition = "none";
-  strip.style.transform = "translateX(0px)";
-  strip.offsetHeight; // force reflow
+  strip.style.transform="translateX(0)";
+  strip.offsetHeight;
 
-  // Find winner card position
-  const cards = strip.querySelectorAll(".card");
-  const winnerCard = cards[PRE];
+  const winner = strip.children[40];
+  const center = document.querySelector(".mask").offsetWidth/2;
+  const target = winner.offsetLeft + winner.offsetWidth/2 - center;
 
-  const maskCenter = mask.clientWidth / 2;
-  const winnerCenter = winnerCard.offsetLeft + (winnerCard.clientWidth / 2);
+  strip.style.transform=`translateX(-${target}px)`;
 
-  // Target translateX so winnerCenter lines up with maskCenter (+ little jitter like CS:GO)
-  const jitter = (Math.random() * 40) - 20; // -20..+20
-  const target = Math.max(0, (winnerCenter - maskCenter) + jitter);
+  await new Promise(r=>setTimeout(r,4700));
 
-  // Animate (CS:GO-ish easing)
-  strip.style.transition = "transform 4.6s cubic-bezier(.08,.85,.12,1)";
-  strip.style.transform = `translateX(-${target}px)`;
-
-  return new Promise((resolve) => setTimeout(resolve, 4700));
-}
-
-// ===== Wire UI =====
-function init() {
-  renderAll(weapons);
-
-  $("search").addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    if (!q) return renderAll(weapons);
-    renderAll(weapons.filter(w => w.name.toLowerCase().includes(q)));
-  });
-
-  $("randomizeBtn").addEventListener("click", async () => {
-    const btn = $("randomizeBtn");
-    btn.disabled = true;
-
-    const tierName = $("tierSelect").value;
-    setStatus(`Rolling: ${tierName}...`);
-
-    // Choose your drops based on tier rules
-    const drops = getDropList(tierName);
-
-    // Pool used for visuals (so roll looks correct to chosen tier)
-    const visualPool = (() => {
-      if (tierName === "Tier 1") return weapons.filter(w => ["S","A"].includes(w.tier));
-      if (tierName === "Test Drops") return weapons.filter(w => ["S","A"].includes(w.tier));
-      if (tierName === "Tier 1.5") return weapons.filter(w => ["F","B"].includes(w.tier));
-      return weapons;
-    })();
-
-    // Roll animation lands on FIRST drop (winner). Then show all drops.
-    await csgoRollOnce(drops[0], visualPool);
-
-    renderDrops(drops);
-    setStatus(`Dropped ${drops.length} weapon(s) from ${tierName}.`);
-    btn.disabled = false;
-  });
-
-  setStatus("Ready.");
-}
-
-window.addEventListener("DOMContentLoaded", init);
+  drops.forEach(w=>dropsDiv.insertAdjacentHTML("beforeend",card(w)));
+  status.textContent=`Dropped ${drops.length} weapon(s)`;
+};
