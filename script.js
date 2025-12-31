@@ -101,6 +101,33 @@ function renderDrop(drop) {
   container.innerHTML = "";
   drop.forEach((w) => container.appendChild(makeCard(w)));
 }
+function playSpinAnimation(finalDrop) {
+  const track = document.getElementById("spinTrack");
+  track.innerHTML = "";
+
+  // Create fake scrolling items
+  const fakePool = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, 20);
+
+  fakePool.forEach(w => track.appendChild(makeCard(w)));
+
+  // Add final drop at the end
+  finalDrop.forEach(w => track.appendChild(makeCard(w)));
+
+  // Reset position
+  track.style.transition = "none";
+  track.style.transform = "translateX(0)";
+  track.offsetHeight;
+
+  // Animate
+  track.style.transition = "transform 2.6s cubic-bezier(.12,.75,.18,1)";
+  const shift = track.scrollWidth - track.parentElement.clientWidth;
+  track.style.transform = `translateX(-${shift}px)`;
+
+  // Reveal final results after animation
+  setTimeout(() => {
+    renderDrop(finalDrop);
+  }, 2700);
+}
 
 // ---- UI wiring ----
 document.getElementById("randomizeBtn").addEventListener("click", () => {
@@ -110,9 +137,7 @@ document.getElementById("randomizeBtn").addEventListener("click", () => {
   }
   const tier = document.getElementById("tierSelect").value;
   const drop = getTierDrop(tier);
-  renderDrop(drop);
-  setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
-});
+  
 
 document.getElementById("search").addEventListener("input", (e) => {
   const q = e.target.value.toLowerCase();
