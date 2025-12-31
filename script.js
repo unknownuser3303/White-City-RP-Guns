@@ -54,7 +54,7 @@ function renderDrop(drop) {
   drop.forEach(w => container.appendChild(makeCard(w)));
 }
 
-// Weighted unique selection
+// Weighted unique selection (no duplicates)
 function weightedPickUnique(items, count, weightFn) {
   const picked = [];
   const pool = [...items];
@@ -85,33 +85,36 @@ function getTierDrop(tierName) {
 
   switch (tierName) {
     case "Test Drops":
+      // 2 guns from S/A
       pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
       count = 2;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Tier 1":
-      // Tier 1: S/A/B
-      // Boost Glock19 Foregrip
-      pool = allWeapons.filter(w => ["S", "A", "B"].includes(w.tier));
+      // ✅ NO B guns allowed. ONLY S/A.
+      // Boost Glock19 Foregrip only.
+      pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
       count = 4;
 
       return weightedPickUnique(pool, count, (w) => {
-        if (w.name === "Glock19 Foregrip") return 6; // 🔥 BOOST
-        if (w.tier === "B") return 0.6;              // low luck B
+        if (w.name === "Glock19 Foregrip") return 6; // BOOST ONLY THIS
         return 1;
       });
 
     case "Tier 1.5":
-      pool = allWeapons.filter(w => ["F", "B"].includes(w.tier));
+      // 4 guns from F/B
+      pool = allWeapons.filter(w => w.tier === "F" || w.tier === "B");
       count = 4;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Tier 2":
+      // 6 guns all tiers
       pool = [...allWeapons];
       count = 6;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
 
     case "Refill":
+      // 1 gun all tiers
       pool = [...allWeapons];
       count = 1;
       return [...pool].sort(() => 0.5 - Math.random()).slice(0, count);
