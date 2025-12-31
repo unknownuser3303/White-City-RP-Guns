@@ -12,6 +12,8 @@ const showT2Btn = document.getElementById("showT2Btn");
 const showAllBtn = document.getElementById("showAllBtn");
 
 let weapons = [];
+let damageMin = 0;
+let damageMax = 100;
 
 /* ---- Inspect Modal elements ---- */
 const inspectModal = document.getElementById("inspectModal");
@@ -28,6 +30,18 @@ function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
 async function loadWeapons(){
   const res = await fetch("./weapons.json", { cache: "no-store" });
   weapons = await res.json();
+
+  // compute damage range for bar scaling
+  const dmgVals = weapons
+    .map(w => Number(w.damage))
+    .filter(v => Number.isFinite(v));
+  if (dmgVals.length) {
+    damageMin = Math.min(...dmgVals);
+    damageMax = Math.max(...dmgVals);
+  } else {
+    damageMin = 0;
+    damageMax = 100;
+  }
 }
 
 /* -------- Image resolver -------- */
@@ -57,6 +71,7 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
+    // known messy ones
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -69,8 +84,50 @@ function imageCandidates(name){
 
 function starsHTML(stars){ return "★".repeat(stars || 0); }
 
-/* -------- Inspect modal -------- */
+/* -------- Damage bar helpers -------- */
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+function damagePct(dmg){
+  const v = Number(dmg);
+  if (!Number.isFinite(v)) return 0;
+  if (damageMax === damageMin) return 1;
+  return clamp01((v - damageMin) / (damageMax - damageMin));
+}
+
+function ensureDamageBar(){
+  // Inject a bar into the modal if it isn't already there
+  // This avoids editing index.html again.
+  if (document.getElementById("damageBarWrap")) return;
+
+  const bar = document.createElement("div");
+  bar.id = "damageBarWrap";
+  bar.style.marginTop = "10px";
+  bar.style.display = "grid";
+  bar.style.gap = "8px";
+
+  bar.innerHTML = `
+    <div style="display:flex; justify-content:space-between; gap:12px; font-size:12px; letter-spacing:.14em; color:rgba(255,255,255,.72);">
+      <div>Damage</div>
+      <div id="damageBarValue" style="color:rgba(255,255,255,.92); font-weight:700;">0</div>
+    </div>
+    <div style="height:12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.35); overflow:hidden;">
+      <div id="damageBarFill" style="height:100%; width:0%; background:linear-gradient(90deg, rgba(255,45,59,.85), rgba(255,200,90,.75));"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:11px; letter-spacing:.12em; color:rgba(255,255,255,.55);">
+      <div id="damageBarMin">${damageMin}</div>
+      <div id="damageBarMax">${damageMax}</div>
+    </div>
+  `;
+
+  // Put the bar under the title area
+  const top = document.querySelector(".modalTop");
+  if (top && top.parentElement) top.parentElement.insertBefore(bar, top.nextSibling);
+}
+
+/* -------- Inspect modal (shows damage + bar) -------- */
 function openInspect(w){
+  ensureDamageBar();
+
   inspectModal.classList.add("show");
   inspectModal.setAttribute("aria-hidden","false");
 
@@ -78,13 +135,24 @@ function openInspect(w){
   modalTier.className = `modalTier tier-${w.tier}`;
   modalName.textContent = w.name;
 
-  const statLine = [];
-  if (w.damage != null) statLine.push(`Damage: ${w.damage}`);
-  if (w.fireRate) statLine.push(`Fire Rate: ${w.fireRate}`);
-  modalStats.textContent = statLine.join(" • ") || " ";
+  const dmgText = (w.damage != null) ? `Damage: ${w.damage}` : `Damage: N/A`;
+  const frText  = w.fireRate ? `Fire Rate: ${w.fireRate}` : `Fire Rate: N/A`;
+  modalStats.textContent = `${dmgText} • ${frText}`;
 
   modalStars.textContent = starsHTML(w.stars || 0);
 
+  // update bar
+  const pct = damagePct(w.damage);
+  const fill = document.getElementById("damageBarFill");
+  const val = document.getElementById("damageBarValue");
+  const minEl = document.getElementById("damageBarMin");
+  const maxEl = document.getElementById("damageBarMax");
+  if (fill) fill.style.width = `${Math.round(pct * 100)}%`;
+  if (val) val.textContent = (w.damage != null ? w.damage : "N/A");
+  if (minEl) minEl.textContent = String(damageMin);
+  if (maxEl) maxEl.textContent = String(damageMax);
+
+  // image
   const candidates = imageCandidates(w.name);
   let i = 0;
   const tryNext = () => {
@@ -161,14 +229,13 @@ function tierConfig(tierName){
   if (tierName === "Tier 1")     return { count: 4, mode: "normal", pool: SA, visual: SA };
 
   // ✅ Tier 1.5 = MOSTLY B/F, small chance S/A
-  // Change pSA to make S/A rarer or more common
   if (tierName === "Tier 1.5")   return {
     count: 4,
     mode: "weighted",
     SA,
     BF,
-    pSA: 0.15,              // 15% chance S/A
-    visual: BF.concat(SA)    // show both in the rolling strip
+    pSA: 0.15,           // 15% chance to roll S/A
+    visual: BF.concat(SA)
   };
 
   // ✅ Tier 2 = ONLY B/F (spin + visuals)
@@ -180,7 +247,6 @@ function tierConfig(tierName){
 
 function pickWinner(cfg){
   if (cfg.mode === "weighted") {
-    // Mostly BF, sometimes SA
     return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
   }
   return pickRandom(cfg.pool);
@@ -216,14 +282,12 @@ async function rollOnce(winner, visualPool){
   await new Promise(r => setTimeout(r, 4700));
 }
 
-function addDrop(w){
-  dropsDiv.appendChild(makeCard(w));
-}
+function addDrop(w){ dropsDiv.appendChild(makeCard(w)); }
 
 /* -------- Filters -------- */
 function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
-function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); } // show still mainly B/F
-function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }  // ✅ only B/F
+function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
+function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }  // T2 view ONLY B/F
 function filterAll(){ return weapons; }
 
 /* -------- Transition helpers -------- */
@@ -262,7 +326,6 @@ spinBtn.addEventListener("click", async () => {
   setStatus(`Rolling ${count} time(s) for ${tier}...`);
 
   const used = new Set();
-
   for (let i = 0; i < count; i++) {
     let winner = pickWinner(cfg);
 
