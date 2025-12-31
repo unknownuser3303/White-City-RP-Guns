@@ -1,63 +1,33 @@
 :root{
-  --bg:#0b0b0f;
-  --panel:#12121a;
-  --panel2:#0f0f16;
-  --text:#ffffff;
-  --muted:#b7b7c7;
-  --line:#2a2a3a;
-
-  /* Tier colors */
-  --S:#2ecc71; /* green */
-  --A:#3498db; /* blue */
-  --B:#9b59b6; /* purple */
-  --F:#f1c40f; /* gold */
+  --bg:#070812;
+  --panel:#0b0e1c;
+  --line:rgba(255,255,255,.12);
+  --text:#e8ecff;
+  --muted:rgba(232,236,255,.65);
 }
 
-*{ box-sizing:border-box; }
-
+*{box-sizing:border-box}
 body{
   margin:0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: radial-gradient(circle at top, #121224, var(--bg));
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(1100px 500px at 50% 0%, rgba(99,102,241,.18), transparent 60%),
+              radial-gradient(900px 600px at 50% 100%, rgba(16,185,129,.10), transparent 60%),
+              var(--bg);
   color:var(--text);
 }
+.wrap{max-width:1200px;margin:0 auto;padding:22px}
 
-.site-header{
-  text-align:center;
-  padding:22px 12px;
-  background: linear-gradient(180deg, #141428, #0e0e16);
-  border-bottom: 1px solid var(--line);
-}
-
-.site-header h1{
-  margin:0;
-  letter-spacing: 1px;
-}
-
-.site-header p{
-  margin:8px 0 0;
-  color:var(--muted);
-}
-
-.wrap{
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 18px 14px 40px;
-  display: grid;
-  gap: 16px;
-}
+.top{padding:14px 6px 18px;border-bottom:1px solid var(--line)}
+.top h1{margin:0;font-size:28px}
+.sub{margin:6px 0 0;color:var(--muted)}
 
 .panel{
-  background: linear-gradient(180deg, var(--panel), var(--panel2));
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
-}
-
-.panel-title{
-  margin: 0 0 12px;
-  font-size: 20px;
+  margin-top:18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 60%), var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:16px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
 }
 
 .controls{
@@ -65,141 +35,141 @@ body{
   flex-wrap:wrap;
   gap:10px;
   align-items:center;
-  justify-content:center;
-  padding: 8px 0 10px;
+  margin-bottom:14px;
 }
-
-label{ color:var(--muted); }
-
-select{
-  padding: 10px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background:#0f0f16;
+.label{color:var(--muted);font-size:14px}
+.select,.btn,.search{
+  border-radius:10px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
   color:var(--text);
+  padding:10px 12px;
 }
-
-button{
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background:#1c1c2a;
-  color:var(--text);
+.btn{
   cursor:pointer;
+  background: rgba(99,102,241,.18);
+}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.status{margin-left:auto;color:var(--muted);font-size:13px}
+
+/* ===== CS:GO ROLL ===== */
+.rollArea{
+  position:relative;
+  padding:14px 10px 18px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  margin-top:10px;
+}
+.stripMask{
+  overflow:hidden;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.28);
+  padding:16px 0;
+}
+.marker{
+  position:absolute;
+  top:8px;
+  bottom:8px;
+  left:50%;
+  width:3px;
+  transform:translateX(-50%);
+  background: linear-gradient(#fbbf24, #f59e0b);
+  box-shadow: 0 0 18px rgba(245,158,11,.6);
+  border-radius:2px;
+  pointer-events:none;
+  z-index:5;
+}
+.strip{
+  display:flex;
+  gap:14px;
+  padding:0 28px;
+  will-change: transform;
 }
 
-button:hover{
-  background:#26263a;
+/* ===== CARD ===== */
+.card{
+  position:relative;
+  width:220px;
+  min-width:220px;
+  height:150px;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-.drops-title{
-  text-align:center;
-  margin-top: 6px;
-  color: var(--muted);
+.card.tier-S{background: #44b000;}
+.card.tier-A{background: #0a75d9;}
+.card.tier-B{background: #7a35c8;}
+.card.tier-F{background: #caa100;}
+
+.card::after{
+  content:"";
+  position:absolute;inset:0;
+  background: radial-gradient(500px 220px at 50% 30%, rgba(255,255,255,.18), transparent 55%);
+  pointer-events:none;
 }
 
-.status{
-  text-align:center;
-  margin-top: 10px;
-  color: var(--muted);
-  min-height: 18px;
+.cardImgWrap{
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px 14px 26px;
+}
+.card img{
+  max-width:98%;
+  max-height:110px;
+  object-fit:contain;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,.6));
 }
 
-.search{
-  width: 100%;
-  max-width: 420px;
-  display:block;
-  margin: 0 auto 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background:#0f0f16;
-  color:var(--text);
+.cardName{
+  position:absolute;
+  left:10px;
+  top:10px;
+  font-weight:800;
+  font-size:14px;
+  text-shadow:0 2px 10px rgba(0,0,0,.8);
 }
 
-.weapon-grid{
+.cardStars{
+  position:absolute;
+  right:10px;
+  bottom:6px;
+  font-size:18px;
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.85);
+}
+
+.dropsTitle{margin:18px 0 10px}
+.drops{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+/* smaller cards for drops & list */
+.dropCard{width:240px}
+.grid{
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+  gap:12px;
+  margin-top:12px;
 }
-
-.drops-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  padding-top: 12px;
+.searchRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
 }
+.search{width:260px}
 
-.weapon-card{
-  background:#161624;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
+.foot{
+  margin:18px 0 6px;
+  color:var(--muted);
+  font-size:12px;
   text-align:center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-  position: relative;
-}
-
-.weapon-card h3{
-  margin: 0 0 8px;
-  font-size: 18px;
-}
-
-.weapon-card .meta{
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-/* Tier stripe */
-.weapon-card::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width: 6px;
-  border-radius: 12px 0 0 12px;
-  background: #666;
-}
-
-.weapon-card.tier-S::before{ background: var(--S); }
-.weapon-card.tier-A::before{ background: var(--A); }
-.weapon-card.tier-B::before{ background: var(--B); }
-.weapon-card.tier-F::before{ background: var(--F); }
-
-.site-footer{
-  text-align:center;
-  padding: 14px 10px;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-  background:#0e0e16;
-}
-.site-logo{
-  max-width: 340px;
-  width: 90%;
-  display: block;
-  margin: 0 auto 12px;
-  filter: drop-shadow(0 0 20px rgba(255,255,255,0.15));
-}
-.spin-wrapper{
-  overflow: hidden;
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  margin-top: 12px;
-  background: #0b0b12;
-}
-
-.spin-track{
-  display: flex;
-  gap: 12px;
-  padding: 14px;
-  transform: translateX(0);
-  transition: transform 2.6s cubic-bezier(.12,.75,.18,1);
-}
-
-.spin-track .weapon-card{
-  min-width: 220px;
-  flex-shrink: 0;
 }
