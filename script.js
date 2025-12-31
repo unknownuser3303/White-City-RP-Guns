@@ -23,11 +23,9 @@ function setStatus(msg) {
 
 function renderWeapons(weapons) {
   const container = document.getElementById("weapons");
+  if (!container) return;
   container.innerHTML = "";
-
-  weapons.forEach((w) => {
-    container.appendChild(makeCard(w));
-  });
+  weapons.forEach((w) => container.appendChild(makeCard(w)));
 }
 
 function makeCard(w) {
@@ -57,7 +55,6 @@ function getTierDrop(tierName) {
       break;
 
     case "Tier 1":
-      // S/A/B allowed, but B should be "low luck"
       pool = allWeapons.filter((w) => ["S", "A", "B"].includes(w.tier));
       count = 4;
       break;
@@ -68,12 +65,12 @@ function getTierDrop(tierName) {
       break;
 
     case "Tier 2":
-      pool = [...allWeapons]; // all tiers
+      pool = [...allWeapons];
       count = 6;
       break;
 
     case "Refill":
-      pool = [...allWeapons]; // all tiers
+      pool = [...allWeapons];
       count = 1;
       break;
 
@@ -82,10 +79,9 @@ function getTierDrop(tierName) {
       count = 1;
   }
 
-  // Shuffle pool
   const shuffled = [...pool].sort(() => 0.5 - Math.random());
 
-  // Tier 1 "low luck B": allow max 1 B in the 4
+  // Tier 1: low luck B (max 1 B)
   if (tierName === "Tier 1") {
     const nonB = shuffled.filter((w) => w.tier !== "B");
     const bOnly = shuffled.filter((w) => w.tier === "B");
@@ -98,57 +94,73 @@ function getTierDrop(tierName) {
 
 function renderDrop(drop) {
   const container = document.getElementById("dropResult");
+  if (!container) return;
   container.innerHTML = "";
   drop.forEach((w) => container.appendChild(makeCard(w)));
 }
+
+// ---- Spin animation ----
 function playSpinAnimation(finalDrop) {
   const track = document.getElementById("spinTrack");
+  const wrapper = track ? track.parentElement : null;
+
+  // If spin area not in HTML, just show results normally
+  if (!track || !wrapper) {
+    renderDrop(finalDrop);
+    return;
+  }
+
   track.innerHTML = "";
 
-  // Create fake scrolling items
+  // Fake scroll items
   const fakePool = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, 20);
+  fakePool.forEach((w) => track.appendChild(makeCard(w)));
 
-  fakePool.forEach(w => track.appendChild(makeCard(w)));
-
-  // Add final drop at the end
-  finalDrop.forEach(w => track.appendChild(makeCard(w)));
+  // Add the final drop at the end so it "lands" on them
+  finalDrop.forEach((w) => track.appendChild(makeCard(w)));
 
   // Reset position
   track.style.transition = "none";
   track.style.transform = "translateX(0)";
-  track.offsetHeight;
+  track.offsetHeight; // force reflow
 
-  // Animate
+  // Animate across
   track.style.transition = "transform 2.6s cubic-bezier(.12,.75,.18,1)";
-  const shift = track.scrollWidth - track.parentElement.clientWidth;
-  track.style.transform = `translateX(-${shift}px)`;
+  const shift = track.scrollWidth - wrapper.clientWidth;
+  track.style.transform = `translateX(-${Math.max(0, shift)}px)`;
 
-  // Reveal final results after animation
-  setTimeout(() => {
-    renderDrop(finalDrop);
-  }, 2700);
+  setTimeout(() => renderDrop(finalDrop), 2700);
 }
 
 // ---- UI wiring ----
-document.getElementById("randomizeBtn").addEventListener("click", () => {
-  if (!allWeapons.length) {
-    setStatus("Weapons not loaded yet.");
-    return;
+function wireUI() {
+  const btn = document.getElementById("randomizeBtn");
+  const tierSelect = document.getElementById("tierSelect");
+  const search = document.getElementById("search");
+
+  if (btn && tierSelect) {
+    btn.addEventListener("click", () => {
+      if (!allWeapons.length) {
+        setStatus("Weapons not loaded yet.");
+        return;
+      }
+      const tier = tierSelect.value;
+      const drop = getTierDrop(tier);
+      playSpinAnimation(drop);
+      setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
+    });
   }
-  const tier = document.getElementById("tierSelect").value;
-  const drop = getTierDrop(tier);
-playSpinAnimation(drop);
-setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
 
-  
+  if (search) {
+    search.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = allWeapons.filter((w) => w.name.toLowerCase().includes(q));
+      renderWeapons(filtered);
+    });
+  }
+}
 
-document.getElementById("search").addEventListener("input", (e) => {
-  const q = e.target.value.toLowerCase();
-  const filtered = allWeapons.filter((w) => w.name.toLowerCase().includes(q));
-  renderWeapons(filtered);
-});
-
-// Simple HTML escape so names can't break layout
+// Simple HTML escape
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (m) => ({
     "&": "&amp;",
@@ -159,5 +171,8 @@ function escapeHtml(str) {
   }[m]));
 }
 
-// Start
-loadWeapons();
+// Start AFTER page loads
+window.addEventListener("DOMContentLoaded", () => {
+  wireUI();
+  loadWeapons();
+});
