@@ -30,7 +30,7 @@ async function loadWeapons(){
   weapons = await res.json();
 }
 
-/* -------- Image resolver (handles your filename mess) -------- */
+/* -------- Image resolver -------- */
 function slug(n){
   return n.toLowerCase()
     .replace(/\(b\)/g, "b")
@@ -57,7 +57,6 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
-    // known messy ones
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -79,7 +78,6 @@ function openInspect(w){
   modalTier.className = `modalTier tier-${w.tier}`;
   modalName.textContent = w.name;
 
-  // if you ever add stats later, it will show; otherwise blank
   const statLine = [];
   if (w.damage != null) statLine.push(`Damage: ${w.damage}`);
   if (w.fireRate) statLine.push(`Fire Rate: ${w.fireRate}`);
@@ -141,9 +139,7 @@ function makeCard(w){
   img.onerror = tryNext;
   tryNext();
 
-  // click to inspect
   div.addEventListener("click", () => openInspect(w));
-
   return div;
 }
 
@@ -156,23 +152,38 @@ function pickRandom(list){
   return list[Math.floor(Math.random() * list.length)];
 }
 
-/* -------- Tier rules --------
-   Test Drops: 2 rolls (S+A)
-   Tier 1:     4 rolls (S+A)
-   Tier 1.5:   4 rolls (B+F)
-   Tier 2:     6 rolls (B+F)  ✅ per your request
-   Refill:     1 roll  (ALL)
-*/
+/* -------- Tier rules -------- */
 function tierConfig(tierName){
   const SA = weapons.filter(w => ["S","A"].includes(w.tier));
   const BF = weapons.filter(w => ["B","F"].includes(w.tier));
 
-  if (tierName === "Test Drops") return { count: 2, pool: SA, visual: SA };
-  if (tierName === "Tier 1")     return { count: 4, pool: SA, visual: SA };
-  if (tierName === "Tier 1.5")   return { count: 4, pool: BF, visual: BF };
-  if (tierName === "Tier 2")     return { count: 6, pool: BF, visual: BF }; // ✅ ONLY B+F
-  if (tierName === "Refill")     return { count: 1, pool: weapons, visual: weapons };
-  return { count: 1, pool: weapons, visual: weapons };
+  if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
+  if (tierName === "Tier 1")     return { count: 4, mode: "normal", pool: SA, visual: SA };
+
+  // ✅ Tier 1.5 = MOSTLY B/F, small chance S/A
+  // Change pSA to make S/A rarer or more common
+  if (tierName === "Tier 1.5")   return {
+    count: 4,
+    mode: "weighted",
+    SA,
+    BF,
+    pSA: 0.15,              // 15% chance S/A
+    visual: BF.concat(SA)    // show both in the rolling strip
+  };
+
+  // ✅ Tier 2 = ONLY B/F (spin + visuals)
+  if (tierName === "Tier 2")     return { count: 6, mode: "normal", pool: BF, visual: BF };
+
+  if (tierName === "Refill")     return { count: 1, mode: "normal", pool: weapons, visual: weapons };
+  return { count: 1, mode: "normal", pool: weapons, visual: weapons };
+}
+
+function pickWinner(cfg){
+  if (cfg.mode === "weighted") {
+    // Mostly BF, sometimes SA
+    return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
+  }
+  return pickRandom(cfg.pool);
 }
 
 /* -------- CS:GO roll once -------- */
@@ -211,11 +222,11 @@ function addDrop(w){
 
 /* -------- Filters -------- */
 function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
-function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
-function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); } // ✅ ONLY B+F
+function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); } // show still mainly B/F
+function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }  // ✅ only B/F
 function filterAll(){ return weapons; }
 
-/* -------- Transition helpers for Show section -------- */
+/* -------- Transition helpers -------- */
 function setActiveButton(btn){
   [showT1Btn, showT15Btn, showT2Btn, showAllBtn].forEach(b => b?.classList.remove("is-active"));
   btn?.classList.add("is-active");
@@ -239,30 +250,36 @@ spinBtn.addEventListener("click", async () => {
   const tier = tierSelect.value;
   const cfg = tierConfig(tier);
 
-  if (!cfg.pool.length) {
+  const visualPool = cfg.visual || cfg.pool || weapons;
+  const count = cfg.count || 1;
+
+  if (!weapons.length) {
     setStatus("weapons.json not loaded or empty.");
     spinBtn.disabled = false;
     return;
   }
 
-  setStatus(`Rolling ${cfg.count} time(s) for ${tier}...`);
+  setStatus(`Rolling ${count} time(s) for ${tier}...`);
 
   const used = new Set();
-  for (let i = 0; i < cfg.count; i++) {
-    let winner = pickRandom(cfg.pool);
+
+  for (let i = 0; i < count; i++) {
+    let winner = pickWinner(cfg);
+
+    // avoid duplicates if possible
     let tries = 0;
     while (used.has(winner.name) && tries < 25) {
-      winner = pickRandom(cfg.pool);
+      winner = pickWinner(cfg);
       tries++;
     }
     used.add(winner.name);
 
-    setStatus(`Rolling ${i+1}/${cfg.count}...`);
-    await rollOnce(winner, cfg.visual);
+    setStatus(`Rolling ${i+1}/${count}...`);
+    await rollOnce(winner, visualPool);
     addDrop(winner);
   }
 
-  setStatus(`Done! Dropped ${cfg.count} weapon(s) from ${tier}.`);
+  setStatus(`Done! Dropped ${count} weapon(s) from ${tier}.`);
   spinBtn.disabled = false;
 });
 
