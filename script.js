@@ -13,6 +13,16 @@ const showAllBtn = document.getElementById("showAllBtn");
 
 let weapons = [];
 
+/* ---- Inspect Modal elements ---- */
+const inspectModal = document.getElementById("inspectModal");
+const modalClose = document.getElementById("modalClose");
+const modalX = document.getElementById("modalX");
+const modalTier = document.getElementById("modalTier");
+const modalName = document.getElementById("modalName");
+const modalStats = document.getElementById("modalStats");
+const modalImg = document.getElementById("modalImg");
+const modalStars = document.getElementById("modalStars");
+
 function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
 
 async function loadWeapons(){
@@ -20,6 +30,7 @@ async function loadWeapons(){
   weapons = await res.json();
 }
 
+/* -------- Image resolver (handles your filename mess) -------- */
 function slug(n){
   return n.toLowerCase()
     .replace(/\(b\)/g, "b")
@@ -46,6 +57,7 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
+    // known messy ones
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -58,32 +70,69 @@ function imageCandidates(name){
 
 function starsHTML(stars){ return "★".repeat(stars || 0); }
 
-function makeCard(w){
-  const name = w.name;
-  const tier = w.tier;
-  const stars = w.stars || 0;
+/* -------- Inspect modal -------- */
+function openInspect(w){
+  inspectModal.classList.add("show");
+  inspectModal.setAttribute("aria-hidden","false");
 
+  modalTier.textContent = `Tier ${w.tier}`;
+  modalTier.className = `modalTier tier-${w.tier}`;
+  modalName.textContent = w.name;
+
+  // if you ever add stats later, it will show; otherwise blank
+  const statLine = [];
+  if (w.damage != null) statLine.push(`Damage: ${w.damage}`);
+  if (w.fireRate) statLine.push(`Fire Rate: ${w.fireRate}`);
+  modalStats.textContent = statLine.join(" • ") || " ";
+
+  modalStars.textContent = starsHTML(w.stars || 0);
+
+  const candidates = imageCandidates(w.name);
+  let i = 0;
+  const tryNext = () => {
+    if (i >= candidates.length) {
+      modalImg.removeAttribute("src");
+      modalImg.alt = "Image missing";
+      return;
+    }
+    modalImg.src = candidates[i++];
+  };
+  modalImg.onerror = tryNext;
+  tryNext();
+}
+
+function closeInspect(){
+  inspectModal.classList.remove("show");
+  inspectModal.setAttribute("aria-hidden","true");
+}
+
+modalClose.addEventListener("click", closeInspect);
+modalX.addEventListener("click", closeInspect);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInspect(); });
+
+/* -------- Cards / Rendering -------- */
+function makeCard(w){
   const div = document.createElement("div");
-  div.className = `card tier-${tier}`;
+  div.className = `card tier-${w.tier}`;
   div.innerHTML = `
-    <div class="cardName">${name}</div>
+    <div class="cardName">${w.name}</div>
     <div class="cardImgWrap">
-      <img alt="${name}">
+      <img alt="${w.name}">
       <div class="missing" style="display:none;"></div>
     </div>
-    <div class="cardStars">${starsHTML(stars)}</div>
+    <div class="cardStars">${starsHTML(w.stars || 0)}</div>
   `;
 
   const img = div.querySelector("img");
   const miss = div.querySelector(".missing");
-  const candidates = imageCandidates(name);
+  const candidates = imageCandidates(w.name);
 
   let i = 0;
   const tryNext = () => {
     if (i >= candidates.length) {
       img.style.display = "none";
       miss.style.display = "flex";
-      miss.textContent = `MISSING:\n${name}`;
+      miss.textContent = `MISSING:\n${w.name}`;
       return;
     }
     img.src = candidates[i++];
@@ -91,6 +140,10 @@ function makeCard(w){
 
   img.onerror = tryNext;
   tryNext();
+
+  // click to inspect
+  div.addEventListener("click", () => openInspect(w));
+
   return div;
 }
 
@@ -103,18 +156,26 @@ function pickRandom(list){
   return list[Math.floor(Math.random() * list.length)];
 }
 
+/* -------- Tier rules --------
+   Test Drops: 2 rolls (S+A)
+   Tier 1:     4 rolls (S+A)
+   Tier 1.5:   4 rolls (B+F)
+   Tier 2:     6 rolls (B+F)  ✅ per your request
+   Refill:     1 roll  (ALL)
+*/
 function tierConfig(tierName){
   const SA = weapons.filter(w => ["S","A"].includes(w.tier));
   const BF = weapons.filter(w => ["B","F"].includes(w.tier));
 
   if (tierName === "Test Drops") return { count: 2, pool: SA, visual: SA };
-  if (tierName === "Tier 1") return { count: 4, pool: SA, visual: SA };
-  if (tierName === "Tier 1.5") return { count: 4, pool: BF, visual: BF };
-  if (tierName === "Tier 2") return { count: 6, pool: weapons, visual: weapons };
-  if (tierName === "Refill") return { count: 1, pool: weapons, visual: weapons };
+  if (tierName === "Tier 1")     return { count: 4, pool: SA, visual: SA };
+  if (tierName === "Tier 1.5")   return { count: 4, pool: BF, visual: BF };
+  if (tierName === "Tier 2")     return { count: 6, pool: BF, visual: BF }; // ✅ ONLY B+F
+  if (tierName === "Refill")     return { count: 1, pool: weapons, visual: weapons };
   return { count: 1, pool: weapons, visual: weapons };
 }
 
+/* -------- CS:GO roll once -------- */
 async function rollOnce(winner, visualPool){
   const PRE = 40, POST = 12;
   const roll = [];
@@ -148,31 +209,29 @@ function addDrop(w){
   dropsDiv.appendChild(makeCard(w));
 }
 
-/* Filters */
+/* -------- Filters -------- */
 function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
 function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
-function filterT2(){ return weapons; }
+function filterT2(){ return weapons.filter(w => ["B","F"].includes(w.tier)); } // ✅ ONLY B+F
+function filterAll(){ return weapons; }
 
-/* Transition helpers */
+/* -------- Transition helpers for Show section -------- */
 function setActiveButton(btn){
   [showT1Btn, showT15Btn, showT2Btn, showAllBtn].forEach(b => b?.classList.remove("is-active"));
   btn?.classList.add("is-active");
 }
 
 function switchGrid(list, activeBtn){
-  setActiveButton(activeBtn);
+  if (activeBtn) setActiveButton(activeBtn);
 
   allWeaponsDiv.classList.add("is-switching");
-
   setTimeout(() => {
     renderGrid(allWeaponsDiv, list);
-    requestAnimationFrame(() => {
-      allWeaponsDiv.classList.remove("is-switching");
-    });
+    requestAnimationFrame(() => allWeaponsDiv.classList.remove("is-switching"));
   }, 220);
 }
 
-/* Spin */
+/* -------- Button listeners -------- */
 spinBtn.addEventListener("click", async () => {
   spinBtn.disabled = true;
   dropsDiv.innerHTML = "";
@@ -189,7 +248,6 @@ spinBtn.addEventListener("click", async () => {
   setStatus(`Rolling ${cfg.count} time(s) for ${tier}...`);
 
   const used = new Set();
-
   for (let i = 0; i < cfg.count; i++) {
     let winner = pickRandom(cfg.pool);
     let tries = 0;
@@ -208,20 +266,18 @@ spinBtn.addEventListener("click", async () => {
   spinBtn.disabled = false;
 });
 
-/* Show buttons (with transition) */
 showT1Btn.addEventListener("click", () => switchGrid(filterT1(), showT1Btn));
 showT15Btn.addEventListener("click", () => switchGrid(filterT15(), showT15Btn));
 showT2Btn.addEventListener("click", () => switchGrid(filterT2(), showT2Btn));
-showAllBtn.addEventListener("click", () => switchGrid(weapons, showAllBtn));
+showAllBtn.addEventListener("click", () => switchGrid(filterAll(), showAllBtn));
 
-/* Search */
 searchInput.addEventListener("input", (e) => {
   const q = e.target.value.trim().toLowerCase();
-  if (!q) return switchGrid(weapons, showAllBtn);
+  if (!q) return switchGrid(filterAll(), showAllBtn);
   switchGrid(weapons.filter(w => w.name.toLowerCase().includes(q)), null);
 });
 
-/* Init */
+/* -------- Init -------- */
 (async function init(){
   await loadWeapons();
   renderGrid(allWeaponsDiv, weapons);
