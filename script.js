@@ -24,16 +24,245 @@ const modalImg = document.getElementById("modalImg");
 const modalStars = document.getElementById("modalStars");
 
 /* ---- Damage bar nodes (injected) ---- */
-let barWrap = null;
-let barFill = null;
-let barVal = null;
-let barMin = null;
-let barMax = null;
+let barWrap = null, barFill = null, barVal = null, barMin = null, barMax = null;
 
 function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 
 /* =========================================================
-   Animated background
+   CSS injector (marker highlight + mobile + compare modal + toolbar)
+   ========================================================= */
+(function injectCSS(){
+  const id = "wc_full_css_v1";
+  if (document.getElementById(id)) return;
+  const st = document.createElement("style");
+  st.id = id;
+  st.textContent = `
+    /* Marker tracking glow */
+    .card.is-under-marker{
+      transform: translateY(-2px) scale(1.02);
+      outline: 2px solid rgba(80,230,255,.75);
+      box-shadow: 0 0 0 3px rgba(80,230,255,.16), 0 18px 45px rgba(0,0,0,.65);
+      transition: transform 80ms linear, box-shadow 80ms linear, outline 80ms linear;
+    }
+
+    /* F-tier glow burst */
+    .f-hit-glow{ position:relative; }
+    .f-hit-glow::after{
+      content:""; position:absolute; inset:-12px; border-radius:18px; pointer-events:none;
+      background: radial-gradient(circle at 50% 40%,
+        rgba(255,215,90,.65),
+        rgba(255,50,200,.22) 42%,
+        rgba(0,0,0,0) 72%);
+      filter: blur(7px);
+      animation: fglow .95s ease-out forwards;
+    }
+    @keyframes fglow{
+      0%{ opacity:0; transform:scale(.98);}
+      18%{ opacity:1; transform:scale(1);}
+      100%{ opacity:0; transform:scale(1.04);}
+    }
+
+    /* Compare selection highlight */
+    .card.is-compare{
+      outline: 2px solid rgba(80,230,255,.75);
+      box-shadow: 0 0 0 3px rgba(80,230,255,.14), 0 18px 42px rgba(0,0,0,.55);
+    }
+
+    /* Compare Toast */
+    .compareToast{
+      position: fixed;
+      left: 12px; right: 12px;
+      bottom: 92px;
+      display:none;
+      z-index: 9999;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 45px rgba(0,0,0,.65);
+      color: rgba(255,255,255,.88);
+      letter-spacing: .10em;
+      font-size: 12px;
+    }
+    .compareToast.show{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .compareToast button{
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(80,230,255,.70);
+      background: rgba(80,230,255,.12);
+      color: rgba(255,255,255,.9);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      cursor:pointer;
+    }
+    .compareToast button:disabled{
+      opacity:.45; cursor:not-allowed;
+    }
+
+    /* Compare Modal */
+    #compareModal{
+      position: fixed;
+      inset: 0;
+      display:none;
+      place-items:center;
+      z-index: 10000;
+    }
+    #compareModal.show{ display:grid; }
+    #compareBackdrop{
+      position:absolute; inset:0;
+      background: rgba(0,0,0,.70);
+      backdrop-filter: blur(9px);
+    }
+    .compareCard{
+      position: relative;
+      width: min(980px, calc(100% - 24px));
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(12,12,22,.92);
+      box-shadow: 0 30px 90px rgba(0,0,0,.75);
+      overflow:hidden;
+    }
+    .compareTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .compareTopTitle{
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+    }
+    .compareClose{
+      height: 36px; width: 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+    }
+    .compareBody{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 14px;
+    }
+    @media(max-width: 820px){ .compareBody{ grid-template-columns: 1fr; } }
+    .comparePane{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.22);
+      padding: 12px;
+      display:grid;
+      gap: 10px;
+    }
+    .cmpName{
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+    .cmpTier{
+      display:inline-flex;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.78);
+    }
+    .cmpImg{
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 45px rgba(0,0,0,.60);
+      justify-self: center;
+    }
+    .cmpStats{
+      font-size: 12px;
+      letter-spacing: .10em;
+      color: rgba(255,255,255,.75);
+      line-height: 1.6;
+    }
+    .cmpBars{ display:grid; gap: 10px; }
+    .barRow{ display:grid; gap: 6px; }
+    .barLabel{
+      display:flex; justify-content:space-between;
+      font-size: 12px; letter-spacing: .10em;
+      color: rgba(255,255,255,.72);
+    }
+    .barTrack{
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .barFill{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(80,230,255,.55), rgba(180,90,255,.55), rgba(255,205,80,.55));
+    }
+
+    /* Mobile toolbar */
+    .mobileToolbar{
+      display:none;
+      position: fixed;
+      left: 10px; right: 10px; bottom: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.55);
+      box-shadow: 0 18px 45px rgba(0,0,0,.65);
+      backdrop-filter: blur(10px);
+      z-index: 9998;
+    }
+    .mobileToolbarRow{ display:flex; gap:10px; }
+    .mobileToolbar .mBtn{
+      flex: 1;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.92);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 800;
+      cursor:pointer;
+    }
+    .mobileToolbar .mBtn.primary{
+      border-color: rgba(80,230,255,.70);
+      background: linear-gradient(180deg, rgba(80,230,255,.18), rgba(80,230,255,.08));
+    }
+
+    /* Mobile: ensure whole page is visible and not cut off */
+    @media (max-width: 880px){
+      html, body{ height:auto; min-height:100%; }
+      .app{ min-height: 100vh; height:auto !important; }
+      .main{ min-height: 100vh; height:auto !important; overflow: visible !important; }
+      body{ padding-bottom: 110px !important; }
+      .uiBtn, .uiSelect, .search{ min-height: 48px !important; border-radius: 16px !important; }
+      .rollArea{ margin-top: 10px; }
+      .mask{ width:100%; overflow:hidden; }
+    }
+  `;
+  document.head.appendChild(st);
+})();
+
+/* =========================================================
+   Animated background (canvas)
    ========================================================= */
 (function startAnimatedBackground(){
   const cv = document.createElement("canvas");
@@ -106,7 +335,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 })();
 
 /* =========================================================
-   Audio (volume + mute + perfect tick) + F effects
+   Audio (volume + mute) + tick + hit
    ========================================================= */
 const AUDIO_KEY = "wc_audio_settings_v1";
 const audioState = { muted: false, volume: 0.55 };
@@ -176,6 +405,50 @@ function playHit(tier){
   }
 }
 
+/* Audio UI injected in sidebar */
+(function injectAudioUI(){
+  const sidebar = document.querySelector(".sidebar");
+  if (!sidebar) return;
+
+  const block = document.createElement("div");
+  block.className = "panelBlock";
+  block.innerHTML = `
+    <div class="panelTitle">Audio</div>
+    <div class="panelBody" style="gap:10px;">
+      <button id="muteBtn" class="uiBtn ghost" style="justify-content:center;">
+        ${audioState.muted ? "Unmute" : "Mute"}
+      </button>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.7);">Volume</div>
+        <input id="volSlider" type="range" min="0" max="1" step="0.01" value="${audioState.volume}" style="flex:1;">
+      </div>
+    </div>
+  `;
+  sidebar.appendChild(document.createElement("div")).style.height = "10px";
+  sidebar.appendChild(block);
+
+  const muteBtn = block.querySelector("#muteBtn");
+  const volSlider = block.querySelector("#volSlider");
+
+  muteBtn.addEventListener("click", ()=>{
+    unlockAudioOnce();
+    audioState.muted = !audioState.muted;
+    muteBtn.textContent = audioState.muted ? "Unmute" : "Mute";
+    saveAudioSettings();
+    if (!audioState.muted) playTick();
+  });
+
+  volSlider.addEventListener("input", ()=>{
+    unlockAudioOnce();
+    audioState.volume = parseFloat(volSlider.value);
+    saveAudioSettings();
+  });
+})();
+
+/* =========================================================
+   Confetti + glow burst for F-tier
+   ========================================================= */
 function confettiBurst(){
   const root = document.createElement("div");
   root.style.position="fixed"; root.style.inset="0";
@@ -220,298 +493,33 @@ function glowBurst(){
   setTimeout(()=>rollArea.classList.remove("f-hit-glow"), 950);
 }
 
-(function injectExtraCSS(){
-  const id = "wcExtraCSS_v2";
-  if(document.getElementById(id)) return;
-  const st = document.createElement("style");
-  st.id = id;
-  st.textContent = `
-    .f-hit-glow{ position:relative; }
-    .f-hit-glow::after{
-      content:""; position:absolute; inset:-12px; border-radius:18px; pointer-events:none;
-      background: radial-gradient(circle at 50% 40%,
-        rgba(255,215,90,.65),
-        rgba(255,50,200,.22) 42%,
-        rgba(0,0,0,0) 72%);
-      filter: blur(7px);
-      animation: fglow .95s ease-out forwards;
-    }
-    @keyframes fglow{
-      0%{ opacity:0; transform:scale(.98);}
-      18%{ opacity:1; transform:scale(1);}
-      100%{ opacity:0; transform:scale(1.04);}
-    }
-
-    /* -------- Mobile Bottom Toolbar -------- */
-    .mobileToolbar{
-      display:none;
-      position: fixed;
-      left: 10px; right: 10px; bottom: 10px;
-      padding: 10px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.55);
-      box-shadow: 0 18px 45px rgba(0,0,0,.65);
-      backdrop-filter: blur(10px);
-      z-index: 9998;
-    }
-    .mobileToolbarRow{ display:flex; gap:10px; }
-    .mobileToolbar .mBtn{
-      flex: 1;
-      height: 46px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.92);
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      font-size: 12px;
-      font-weight: 800;
-      cursor:pointer;
-    }
-    .mobileToolbar .mBtn.primary{
-      border-color: rgba(80,230,255,.70);
-      background: linear-gradient(180deg, rgba(80,230,255,.18), rgba(80,230,255,.08));
-    }
-
-    /* Make existing buttons easier to tap on mobile */
-    @media (max-width: 880px){
-      .uiBtn{ height: 46px !important; border-radius: 16px !important; font-size: 12px !important; }
-      .uiSelect, .search{ height: 46px !important; border-radius: 16px !important; }
-      .card{ border-radius: 18px; }
-      .cardName{ padding-top: 12px; }
-      .mobileToolbar{ display:block; }
-      body{ padding-bottom: 92px; } /* space for toolbar */
-    }
-
-    /* -------- Compare Mode UI -------- */
-    .compareToast{
-      position: fixed;
-      left: 12px; right: 12px;
-      bottom: 92px;
-      display:none;
-      z-index: 9999;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 45px rgba(0,0,0,.65);
-      color: rgba(255,255,255,.88);
-      letter-spacing: .10em;
-      font-size: 12px;
-    }
-    .compareToast.show{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .compareToast button{
-      height: 38px;
-      border-radius: 12px;
-      border: 1px solid rgba(80,230,255,.70);
-      background: rgba(80,230,255,.12);
-      color: rgba(255,255,255,.9);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-      cursor:pointer;
-    }
-    .card.is-compare{
-      outline: 2px solid rgba(80,230,255,.75);
-      box-shadow: 0 0 0 3px rgba(80,230,255,.14), 0 18px 42px rgba(0,0,0,.55);
-    }
-
-    /* Compare Modal */
-    #compareModal{
-      position: fixed;
-      inset: 0;
-      display:none;
-      place-items:center;
-      z-index: 10000;
-    }
-    #compareModal.show{ display:grid; }
-    #compareBackdrop{
-      position:absolute; inset:0;
-      background: rgba(0,0,0,.70);
-      backdrop-filter: blur(9px);
-    }
-    .compareCard{
-      position: relative;
-      width: min(980px, calc(100% - 24px));
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(12,12,22,.92);
-      box-shadow: 0 30px 90px rgba(0,0,0,.75);
-      overflow:hidden;
-    }
-    .compareTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 14px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .compareTopTitle{
-      font-weight: 900;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      font-size: 12px;
-      color: rgba(255,255,255,.75);
-    }
-    .compareClose{
-      height: 36px; width: 36px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.92);
-      cursor:pointer;
-    }
-    .compareClose:hover{ background: rgba(255,255,255,.10); }
-
-    .compareBody{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      padding: 14px;
-    }
-    @media(max-width: 820px){
-      .compareBody{ grid-template-columns: 1fr; }
-    }
-    .comparePane{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.22);
-      padding: 12px;
-      display:grid;
-      gap: 10px;
-    }
-    .cmpName{
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-    }
-    .cmpTier{
-      display:inline-flex;
-      width: fit-content;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      font-size: 12px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.78);
-    }
-    .cmpImg{
-      width: 100%;
-      max-width: 420px;
-      aspect-ratio: 1/1;
-      object-fit: cover;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 18px 45px rgba(0,0,0,.60);
-      justify-self: center;
-    }
-    .cmpStats{
-      font-size: 12px;
-      letter-spacing: .10em;
-      color: rgba(255,255,255,.75);
-      line-height: 1.6;
-    }
-    .cmpBars{
-      display:grid;
-      gap: 10px;
-    }
-    .barRow{
-      display:grid;
-      gap: 6px;
-    }
-    .barLabel{
-      display:flex;
-      justify-content:space-between;
-      font-size: 12px;
-      letter-spacing: .10em;
-      color: rgba(255,255,255,.72);
-    }
-    .barTrack{
-      height: 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.35);
-      overflow:hidden;
-    }
-    .barFill{
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, rgba(80,230,255,.55), rgba(180,90,255,.55), rgba(255,205,80,.55));
-    }
-  `;
-  document.head.appendChild(st);
-})();
-
-/* Audio UI injected in sidebar (kept) */
-(function injectAudioUI(){
-  const sidebar = document.querySelector(".sidebar");
-  if (!sidebar) return;
-
-  const block = document.createElement("div");
-  block.className = "panelBlock";
-  block.innerHTML = `
-    <div class="panelTitle">Audio</div>
-    <div class="panelBody" style="gap:10px;">
-      <button id="muteBtn" class="uiBtn ghost" style="justify-content:center;">
-        ${audioState.muted ? "Unmute" : "Mute"}
-      </button>
-
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div style="font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.7);">Volume</div>
-        <input id="volSlider" type="range" min="0" max="1" step="0.01" value="${audioState.volume}" style="flex:1;">
-      </div>
-    </div>
-  `;
-
-  sidebar.appendChild(document.createElement("div")).style.height = "10px";
-  sidebar.appendChild(block);
-
-  const muteBtn = block.querySelector("#muteBtn");
-  const volSlider = block.querySelector("#volSlider");
-
-  muteBtn.addEventListener("click", ()=>{
-    unlockAudioOnce();
-    audioState.muted = !audioState.muted;
-    muteBtn.textContent = audioState.muted ? "Unmute" : "Mute";
-    saveAudioSettings();
-    if (!audioState.muted) playTick();
-  });
-
-  volSlider.addEventListener("input", ()=>{
-    unlockAudioOnce();
-    audioState.volume = parseFloat(volSlider.value);
-    saveAudioSettings();
-  });
-})();
-
 /* =========================================================
-   Helpers (stats)
+   Helpers / Stats
    ========================================================= */
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 function starsHTML(stars) { return "★".repeat(stars || 0); }
+
 function canonicalName(name) { return String(name || "").trim().toLowerCase(); }
 function getWeaponByName(name) {
   const key = canonicalName(name);
   return weapons.find(w => canonicalName(w.name) === key) || null;
 }
 
+/* Damage ranges per tier */
 const DAMAGE_RANGES = {
   S: { min: 21, max: 24 },
   A: { min: 23, max: 26 },
   B: { min: 25, max: 28 },
   F: { min: 30, max: 36 }
 };
+
 function generateDamageForTier(tier) {
   const r = DAMAGE_RANGES[tier] || { min: 20, max: 30 };
   return randInt(r.min, r.max);
 }
 
+/* RPM ranges by type */
 function classifyWeapon(name) {
   const n = canonicalName(name);
   if (n.includes("mac10") || n.includes("kriss") || n.includes("vector")) return "smg";
@@ -519,12 +527,14 @@ function classifyWeapon(name) {
   if (n.includes("switch")) return "switch";
   return "pistol";
 }
+
 const RPM_RANGES = {
   pistol: { min: 280, max: 520 },
   rifle:  { min: 600, max: 850 },
   smg:    { min: 850, max: 1100 },
   switch: { min: 1100, max: 1600 }
 };
+
 function generateRPM(name) {
   const type = classifyWeapon(name);
   const r = RPM_RANGES[type] || RPM_RANGES.pistol;
@@ -532,11 +542,14 @@ function generateRPM(name) {
   if (type === "rifle" && n.includes("binary")) return randInt(Math.max(r.min, 720), r.max);
   return randInt(r.min, r.max);
 }
+
+/* Generate stable stats */
 function ensureGeneratedStats(w) {
   if (w._damage == null) w._damage = generateDamageForTier(w.tier);
   if (w._rpm == null) w._rpm = generateRPM(w.name);
   return w;
 }
+
 const GLOBAL_MIN_DAMAGE = Math.min(...Object.values(DAMAGE_RANGES).map(x => x.min));
 const GLOBAL_MAX_DAMAGE = Math.max(...Object.values(DAMAGE_RANGES).map(x => x.max));
 function damagePct(dmg) {
@@ -551,7 +564,7 @@ function rpmPct(rpm){
   return clamp01(v / GLOBAL_MAX_RPM);
 }
 
-/* Load weapons */
+/* Load weapons.json */
 async function loadWeapons() {
   const res = await fetch("./weapons.json", { cache: "no-store" });
   weapons = await res.json();
@@ -568,19 +581,24 @@ function slug(n) {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
 function imageCandidates(name) {
   const baseSlug = slug(name);
   const baseRaw = String(name).replace(/\(B\)/g, "").replace(/\(b\)/g, "").trim();
   const dir = "./images/weapons/";
+
   const list = [
     `${dir}${baseSlug}.webp`,
     `${dir}${baseSlug}.png`,
     `${dir}${baseSlug}.webp.png`,
     `${dir}${baseSlug}.png.png`,
+
     `${dir}${baseRaw}.webp`,
     `${dir}${baseRaw}.png`,
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
+
+    // known messy fallbacks
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -592,185 +610,7 @@ function imageCandidates(name) {
 }
 
 /* =========================================================
-   Compare Mode
-   ========================================================= */
-let compareMode = false;
-let comparePick = []; // weapon objects (max 2)
-
-function getCardWeaponName(cardEl){
-  const nameEl = cardEl?.querySelector?.(".cardName");
-  return nameEl ? nameEl.textContent.trim() : "";
-}
-
-function clearCompareSelection(){
-  comparePick = [];
-  document.querySelectorAll(".card.is-compare").forEach(el => el.classList.remove("is-compare"));
-  updateCompareToast();
-}
-
-function toggleCompareMode(on){
-  compareMode = !!on;
-  clearCompareSelection();
-  setStatus(compareMode ? "Compare mode: tap 2 weapons to compare." : "Ready.");
-  updateCompareToast();
-}
-
-function updateCompareToast(){
-  const toast = document.getElementById("compareToast");
-  if(!toast) return;
-
-  if(!compareMode){
-    toast.classList.remove("show");
-    return;
-  }
-  toast.classList.add("show");
-
-  const txt = toast.querySelector("#cmpTxt");
-  const btn = toast.querySelector("#cmpOpen");
-  const clr = toast.querySelector("#cmpClear");
-
-  txt.textContent = `COMPARE MODE: Pick 2 weapons (${comparePick.length}/2)`;
-  btn.disabled = comparePick.length !== 2;
-  clr.disabled = comparePick.length === 0;
-}
-
-function openCompareModal(w1, w2){
-  const modal = document.getElementById("compareModal");
-  if(!modal) return;
-
-  const A = ensureGeneratedStats(w1);
-  const B = ensureGeneratedStats(w2);
-
-  // Fill content
-  const setPane = (prefix, w) => {
-    const nameEl = modal.querySelector(`#${prefix}Name`);
-    const tierEl = modal.querySelector(`#${prefix}Tier`);
-    const imgEl  = modal.querySelector(`#${prefix}Img`);
-    const stats  = modal.querySelector(`#${prefix}Stats`);
-    const dmgFill= modal.querySelector(`#${prefix}DmgFill`);
-    const rpmFill= modal.querySelector(`#${prefix}RpmFill`);
-    const dmgVal = modal.querySelector(`#${prefix}DmgVal`);
-    const rpmVal = modal.querySelector(`#${prefix}RpmVal`);
-
-    nameEl.textContent = w.name;
-    tierEl.textContent = `Tier ${w.tier}`;
-    tierEl.className = "cmpTier tier-" + w.tier;
-
-    stats.textContent = `Damage: ${w._damage} • RPM: ${w._rpm}`;
-
-    dmgVal.textContent = w._damage;
-    rpmVal.textContent = w._rpm;
-
-    dmgFill.style.width = `${Math.round(damagePct(w._damage)*100)}%`;
-    rpmFill.style.width = `${Math.round(rpmPct(w._rpm)*100)}%`;
-
-    const candidates = imageCandidates(w.name);
-    let i = 0;
-    const tryNext = () => {
-      if(i >= candidates.length){
-        imgEl.removeAttribute("src");
-        imgEl.alt = "Image missing";
-        return;
-      }
-      imgEl.src = candidates[i++];
-    };
-    imgEl.onerror = tryNext;
-    tryNext();
-  };
-
-  setPane("a", A);
-  setPane("b", B);
-
-  modal.classList.add("show");
-  modal.setAttribute("aria-hidden","false");
-}
-
-function closeCompareModal(){
-  const modal = document.getElementById("compareModal");
-  if(!modal) return;
-  modal.classList.remove("show");
-  modal.setAttribute("aria-hidden","true");
-}
-
-function ensureCompareUI(){
-  if(document.getElementById("compareToast")) return;
-
-  // Toast
-  const toast = document.createElement("div");
-  toast.id = "compareToast";
-  toast.className = "compareToast";
-  toast.innerHTML = `
-    <div id="cmpTxt">COMPARE MODE</div>
-    <div style="display:flex; gap:10px; align-items:center;">
-      <button id="cmpClear" type="button">Clear</button>
-      <button id="cmpOpen" type="button" disabled>Compare</button>
-    </div>
-  `;
-  document.body.appendChild(toast);
-
-  toast.querySelector("#cmpClear").addEventListener("click", clearCompareSelection);
-  toast.querySelector("#cmpOpen").addEventListener("click", ()=>{
-    if(comparePick.length === 2) openCompareModal(comparePick[0], comparePick[1]);
-  });
-
-  // Compare Modal
-  const modal = document.createElement("div");
-  modal.id = "compareModal";
-  modal.innerHTML = `
-    <div id="compareBackdrop"></div>
-    <div class="compareCard" role="dialog" aria-modal="true">
-      <div class="compareTop">
-        <div class="compareTopTitle">Compare Weapons</div>
-        <button class="compareClose" id="compareCloseBtn" aria-label="Close">✕</button>
-      </div>
-      <div class="compareBody">
-        <div class="comparePane">
-          <div class="cmpName" id="aName">A</div>
-          <div class="cmpTier" id="aTier">Tier</div>
-          <img class="cmpImg" id="aImg" alt="Weapon image" />
-          <div class="cmpStats" id="aStats"></div>
-
-          <div class="cmpBars">
-            <div class="barRow">
-              <div class="barLabel"><span>Damage</span><span id="aDmgVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="aDmgFill"></div></div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel"><span>RPM</span><span id="aRpmVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="aRpmFill"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="comparePane">
-          <div class="cmpName" id="bName">B</div>
-          <div class="cmpTier" id="bTier">Tier</div>
-          <img class="cmpImg" id="bImg" alt="Weapon image" />
-          <div class="cmpStats" id="bStats"></div>
-
-          <div class="cmpBars">
-            <div class="barRow">
-              <div class="barLabel"><span>Damage</span><span id="bDmgVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="bDmgFill"></div></div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel"><span>RPM</span><span id="bRpmVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="bRpmFill"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  modal.querySelector("#compareBackdrop").addEventListener("click", closeCompareModal);
-  modal.querySelector("#compareCloseBtn").addEventListener("click", closeCompareModal);
-  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeCompareModal(); });
-}
-
-/* =========================================================
-   Inspect (existing modal)
+   Damage bar in inspect modal
    ========================================================= */
 function ensureDamageBar() {
   if (barWrap) return;
@@ -804,10 +644,9 @@ function ensureDamageBar() {
   barMax = document.getElementById("damageBarMax");
 }
 
+/* Inspect modal open/close */
 function openInspect(anyWeaponObj) {
-  ensureCompareUI();
   ensureDamageBar();
-
   const real = ensureGeneratedStats(getWeaponByName(anyWeaponObj?.name) || anyWeaponObj);
 
   inspectModal.classList.add("show");
@@ -842,19 +681,177 @@ function openInspect(anyWeaponObj) {
   modalImg.onerror = tryNext;
   tryNext();
 }
-
 function closeInspect() {
   inspectModal.classList.remove("show");
   inspectModal.setAttribute("aria-hidden", "true");
 }
-
 modalClose.addEventListener("click", closeInspect);
 modalX.addEventListener("click", closeInspect);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInspect(); });
 
 /* =========================================================
-   Cards (modified: compare-mode click support)
+   Compare Mode
    ========================================================= */
+let compareMode = false;
+let comparePick = [];
+
+function getCardWeaponName(cardEl){
+  const nameEl = cardEl?.querySelector?.(".cardName");
+  return nameEl ? nameEl.textContent.trim() : "";
+}
+function clearCompareSelection(){
+  comparePick = [];
+  document.querySelectorAll(".card.is-compare").forEach(el => el.classList.remove("is-compare"));
+  updateCompareToast();
+}
+function toggleCompareMode(on){
+  compareMode = !!on;
+  clearCompareSelection();
+  setStatus(compareMode ? "Compare mode: tap 2 weapons to compare." : "Ready.");
+  updateCompareToast();
+}
+function updateCompareToast(){
+  const toast = document.getElementById("compareToast");
+  if(!toast) return;
+  if(!compareMode){ toast.classList.remove("show"); return; }
+  toast.classList.add("show");
+  toast.querySelector("#cmpTxt").textContent = `COMPARE MODE: Pick 2 weapons (${comparePick.length}/2)`;
+  toast.querySelector("#cmpOpen").disabled = comparePick.length !== 2;
+  toast.querySelector("#cmpClear").disabled = comparePick.length === 0;
+}
+function openCompareModal(w1, w2){
+  const modal = document.getElementById("compareModal");
+  if(!modal) return;
+
+  const A = ensureGeneratedStats(w1);
+  const B = ensureGeneratedStats(w2);
+
+  const setPane = (prefix, w) => {
+    modal.querySelector(`#${prefix}Name`).textContent = w.name;
+    const tierEl = modal.querySelector(`#${prefix}Tier`);
+    tierEl.textContent = `Tier ${w.tier}`;
+    tierEl.className = "cmpTier tier-" + w.tier;
+
+    modal.querySelector(`#${prefix}Stats`).textContent = `Damage: ${w._damage} • RPM: ${w._rpm}`;
+
+    modal.querySelector(`#${prefix}DmgVal`).textContent = w._damage;
+    modal.querySelector(`#${prefix}RpmVal`).textContent = w._rpm;
+    modal.querySelector(`#${prefix}DmgFill`).style.width = `${Math.round(damagePct(w._damage)*100)}%`;
+    modal.querySelector(`#${prefix}RpmFill`).style.width = `${Math.round(rpmPct(w._rpm)*100)}%`;
+
+    const imgEl = modal.querySelector(`#${prefix}Img`);
+    const candidates = imageCandidates(w.name);
+    let i = 0;
+    const tryNext = () => {
+      if(i >= candidates.length){ imgEl.removeAttribute("src"); imgEl.alt="Image missing"; return; }
+      imgEl.src = candidates[i++];
+    };
+    imgEl.onerror = tryNext;
+    tryNext();
+  };
+
+  setPane("a", A);
+  setPane("b", B);
+
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden","false");
+}
+function closeCompareModal(){
+  const modal = document.getElementById("compareModal");
+  if(!modal) return;
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden","true");
+}
+function ensureCompareUI(){
+  if(document.getElementById("compareToast")) return;
+
+  const toast = document.createElement("div");
+  toast.id = "compareToast";
+  toast.className = "compareToast";
+  toast.innerHTML = `
+    <div id="cmpTxt">COMPARE MODE</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button id="cmpClear" type="button">Clear</button>
+      <button id="cmpOpen" type="button" disabled>Compare</button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  toast.querySelector("#cmpClear").addEventListener("click", clearCompareSelection);
+  toast.querySelector("#cmpOpen").addEventListener("click", ()=>{
+    if(comparePick.length === 2) openCompareModal(comparePick[0], comparePick[1]);
+  });
+
+  const modal = document.createElement("div");
+  modal.id = "compareModal";
+  modal.innerHTML = `
+    <div id="compareBackdrop"></div>
+    <div class="compareCard" role="dialog" aria-modal="true">
+      <div class="compareTop">
+        <div class="compareTopTitle">Compare Weapons</div>
+        <button class="compareClose" id="compareCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="compareBody">
+        <div class="comparePane">
+          <div class="cmpName" id="aName">A</div>
+          <div class="cmpTier" id="aTier">Tier</div>
+          <img class="cmpImg" id="aImg" alt="Weapon image" />
+          <div class="cmpStats" id="aStats"></div>
+          <div class="cmpBars">
+            <div class="barRow">
+              <div class="barLabel"><span>Damage</span><span id="aDmgVal"></span></div>
+              <div class="barTrack"><div class="barFill" id="aDmgFill"></div></div>
+            </div>
+            <div class="barRow">
+              <div class="barLabel"><span>RPM</span><span id="aRpmVal"></span></div>
+              <div class="barTrack"><div class="barFill" id="aRpmFill"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="comparePane">
+          <div class="cmpName" id="bName">B</div>
+          <div class="cmpTier" id="bTier">Tier</div>
+          <img class="cmpImg" id="bImg" alt="Weapon image" />
+          <div class="cmpStats" id="bStats"></div>
+          <div class="cmpBars">
+            <div class="barRow">
+              <div class="barLabel"><span>Damage</span><span id="bDmgVal"></span></div>
+              <div class="barTrack"><div class="barFill" id="bDmgFill"></div></div>
+            </div>
+            <div class="barRow">
+              <div class="barLabel"><span>RPM</span><span id="bRpmVal"></span></div>
+              <div class="barTrack"><div class="barFill" id="bRpmFill"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector("#compareBackdrop").addEventListener("click", closeCompareModal);
+  modal.querySelector("#compareCloseBtn").addEventListener("click", closeCompareModal);
+  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeCompareModal(); });
+}
+
+/* =========================================================
+   Cards + marker tracking helper
+   ========================================================= */
+function cardUnderMarker() {
+  const mask = document.querySelector(".mask");
+  if (!mask || !strip || !strip.children?.length) return null;
+  const markerX = mask.getBoundingClientRect().left + (mask.clientWidth / 2);
+
+  let best = null, bestDist = Infinity;
+  for (const el of strip.children) {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const d = Math.abs(cx - markerX);
+    if (d < bestDist) { bestDist = d; best = el; }
+  }
+  return best;
+}
+
 function makeCard(w) {
   ensureCompareUI();
   const real = ensureGeneratedStats(getWeaponByName(w?.name) || w);
@@ -888,14 +885,11 @@ function makeCard(w) {
   img.onerror = tryNext;
   tryNext();
 
-  // Click: if compare mode -> select, else inspect
   div.addEventListener("click", () => {
     if (!compareMode) return openInspect(real);
 
-    // Compare selection
     const exists = comparePick.find(x => canonicalName(x.name) === canonicalName(real.name));
     if (exists) {
-      // unselect
       comparePick = comparePick.filter(x => canonicalName(x.name) !== canonicalName(real.name));
       div.classList.remove("is-compare");
       updateCompareToast();
@@ -903,9 +897,7 @@ function makeCard(w) {
     }
 
     if (comparePick.length >= 2) {
-      // replace the oldest selection
       const removed = comparePick.shift();
-      // remove old highlight
       document.querySelectorAll(".card.is-compare").forEach(card=>{
         const nm = getCardWeaponName(card);
         if (canonicalName(nm) === canonicalName(removed.name)) card.classList.remove("is-compare");
@@ -924,12 +916,11 @@ function renderGrid(targetEl, list) {
   targetEl.innerHTML = "";
   list.forEach(w => targetEl.appendChild(makeCard(w)));
 
-  // When grid re-renders, re-apply selection highlight if compare mode is on
   if (compareMode && comparePick.length) {
-    const selectedNames = new Set(comparePick.map(x => canonicalName(x.name)));
+    const selected = new Set(comparePick.map(x => canonicalName(x.name)));
     targetEl.querySelectorAll(".card").forEach(card=>{
       const nm = canonicalName(getCardWeaponName(card));
-      if (selectedNames.has(nm)) card.classList.add("is-compare");
+      if (selected.has(nm)) card.classList.add("is-compare");
     });
   }
 }
@@ -945,19 +936,23 @@ function tierConfig(tierName) {
 
   if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
   if (tierName === "Tier 1") return { count: 4, mode: "normal", pool: SA, visual: SA };
+
+  // T1.5: mostly BF, small SA
   if (tierName === "Tier 1.5") return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
+
+  // T2: ONLY BF
   if (tierName === "Tier 2") return { count: 6, mode: "normal", pool: BF, visual: BF };
+
   if (tierName === "Refill") return { count: 1, mode: "normal", pool: weapons, visual: weapons };
   return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 }
-
 function pickWinner(cfg) {
   if (cfg.mode === "weighted") return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
   return pickRandom(cfg.pool);
 }
 
 /* =========================================================
-   Perfect tick timing via cubic-bezier inversion
+   Perfect tick timing: cubic-bezier inversion
    ========================================================= */
 function easingCubicBezier(p1x, p1y, p2x, p2y) {
   function cubic(a, b, c, d, t){
@@ -965,7 +960,6 @@ function easingCubicBezier(p1x, p1y, p2x, p2y) {
     return mt*mt*mt*a + 3*mt*mt*t*b + 3*mt*t*t*c + t*t*t*d;
   }
   function x(t){ return cubic(0, p1x, p2x, 1, t); }
-
   function invX(xTarget){
     let lo = 0, hi = 1;
     for (let i=0;i<24;i++){
@@ -979,7 +973,9 @@ function easingCubicBezier(p1x, p1y, p2x, p2y) {
 }
 const EASE = easingCubicBezier(0.08, 0.85, 0.12, 1);
 
-/* -------- CS:GO roll once (perfect tick + hit + F effects) -------- */
+/* =========================================================
+   CS:GO roll once (perfect ticks + marker highlight tracking)
+   ========================================================= */
 async function rollOnce(winner, visualPool) {
   const PRE = 40, POST = 12;
   const roll = [];
@@ -999,12 +995,12 @@ async function rollOnce(winner, visualPool) {
   const markerX = mask.getBoundingClientRect().left + (mask.clientWidth / 2);
 
   const winnerEl = strip.children[PRE];
-
   const center = mask.clientWidth / 2;
   const winnerCenter = winnerEl.offsetLeft + (winnerEl.offsetWidth / 2);
   const jitter = (Math.random() * 40) - 20;
   const target = Math.max(0, (winnerCenter - center) + jitter);
 
+  // tick schedule (exact crossings)
   const stripLeft = strip.getBoundingClientRect().left; // translate 0
   const total = target;
 
@@ -1023,7 +1019,6 @@ async function rollOnce(winner, visualPool) {
   tickTimes.sort((a,b)=>a-b);
 
   const DURATION = 4600;
-
   strip.style.transition = "transform 4.6s cubic-bezier(.08,.85,.12,1)";
   strip.style.transform = `translateX(-${target}px)`;
 
@@ -1032,8 +1027,9 @@ async function rollOnce(winner, visualPool) {
   let tickIndex = 0;
   const start = performance.now();
   let rafId = null;
+  let lastHighlighted = null;
 
-  function tickLoop(now){
+  function rafLoop(now){
     const elapsed = now - start;
     const t = Math.min(1, elapsed / DURATION);
 
@@ -1041,12 +1037,24 @@ async function rollOnce(winner, visualPool) {
       playTick();
       tickIndex++;
     }
-    if (t < 1) rafId = requestAnimationFrame(tickLoop);
+
+    const current = cardUnderMarker();
+    if (current && current !== lastHighlighted) {
+      if (lastHighlighted) lastHighlighted.classList.remove("is-under-marker");
+      current.classList.add("is-under-marker");
+      lastHighlighted = current;
+    }
+
+    if (t < 1) rafId = requestAnimationFrame(rafLoop);
   }
-  rafId = requestAnimationFrame(tickLoop);
+  rafId = requestAnimationFrame(rafLoop);
 
   await new Promise(r => setTimeout(r, DURATION));
   if (rafId) cancelAnimationFrame(rafId);
+
+  const final = cardUnderMarker();
+  if (lastHighlighted && lastHighlighted !== final) lastHighlighted.classList.remove("is-under-marker");
+  if (final) final.classList.add("is-under-marker");
 
   playHit(winner.tier);
 
@@ -1055,7 +1063,12 @@ async function rollOnce(winner, visualPool) {
     confettiBurst();
   }
 
-  await new Promise(r => setTimeout(r, 140));
+  await new Promise(r => setTimeout(r, 160));
+
+  setTimeout(()=>{
+    const cur = cardUnderMarker();
+    if (cur) cur.classList.remove("is-under-marker");
+  }, 900);
 }
 
 function addDrop(w) { dropsDiv.appendChild(makeCard(w)); }
@@ -1074,7 +1087,8 @@ function setActiveButton(btn) {
 }
 
 /* =========================================================
-   Tier filters + sort UI (injected next to search)
+   Filters + sort UI (tier filter + sort + dir) injected near search
+   (works even if your HTML row class differs)
    ========================================================= */
 let currentBaseList = [];
 const state = { tierFilter: "ALL", sortBy: "TIER", sortDir: "DESC" };
@@ -1086,7 +1100,6 @@ function tierRank(t){
   if (t === "F") return 1;
   return 0;
 }
-
 function applyTierFilter(list){
   if (state.tierFilter === "ALL") return list;
   return list.filter(w => w.tier === state.tierFilter);
@@ -1124,7 +1137,6 @@ function applySort(list){
       if (d !== 0) return d * dir;
       return (tierRank(A.tier) - tierRank(B.tier)) * dir;
     }
-
     return 0;
   });
 
@@ -1138,22 +1150,22 @@ function updateWeaponsGridWithFilters(){
     list = applySearch(list);
     list = applyTierFilter(list);
     list = applySort(list);
-
     renderGrid(allWeaponsDiv, list);
     requestAnimationFrame(()=> allWeaponsDiv.classList.remove("is-switching"));
   }, 180);
 }
 
 function injectFilterSortUI(){
-  const row = document.querySelector(".sectionHead.rowHead");
-  if (!row) return;
+  // try multiple possibilities to find the row containing your search input
+  const row = searchInput?.closest?.(".row") || searchInput?.parentElement || null;
+  if (!row || row.dataset.enhanced === "1") return;
+  row.dataset.enhanced = "1";
 
   const controls = document.createElement("div");
   controls.style.display = "flex";
   controls.style.flexWrap = "wrap";
   controls.style.gap = "10px";
   controls.style.alignItems = "center";
-  controls.style.justifyContent = "flex-end";
   controls.style.marginLeft = "auto";
 
   const tierSel = document.createElement("select");
@@ -1183,10 +1195,10 @@ function injectFilterSortUI(){
 
   if (searchInput) searchInput.style.minWidth = "220px";
 
+  // If search already in row, just append controls before/after it nicely
   controls.appendChild(tierSel);
   controls.appendChild(sortSel);
   controls.appendChild(dirBtn);
-  if (searchInput) controls.appendChild(searchInput);
 
   row.appendChild(controls);
 
@@ -1206,7 +1218,7 @@ function switchSection(baseList, activeBtn){
 }
 
 /* =========================================================
-   Mobile Bottom Toolbar (quick actions)
+   Mobile Bottom Toolbar (quick actions + compare toggle)
    ========================================================= */
 function injectMobileToolbar(){
   if(document.querySelector(".mobileToolbar")) return;
@@ -1233,15 +1245,12 @@ function injectMobileToolbar(){
   tb.querySelector("#mT2").addEventListener("click", ()=> switchSection(filterT2(), showT2Btn));
 
   tb.querySelector("#mSpin").addEventListener("click", ()=>{
-    // scroll to top roll area on mobile then spin
     document.querySelector(".rollArea")?.scrollIntoView({ behavior:"smooth", block:"start" });
     setTimeout(()=> spinBtn.click(), 250);
   });
 
   const cmpBtn = tb.querySelector("#mCompare");
-  function updateCmpBtn(){
-    cmpBtn.textContent = compareMode ? "Compare: ON" : "Compare";
-  }
+  function updateCmpBtn(){ cmpBtn.textContent = compareMode ? "Compare: ON" : "Compare"; }
   updateCmpBtn();
 
   cmpBtn.addEventListener("click", ()=>{
@@ -1249,6 +1258,16 @@ function injectMobileToolbar(){
     updateCmpBtn();
   });
 }
+
+/* =========================================================
+   Inspect modal listeners
+   ========================================================= */
+function closeAllModalsOnEsc(e){
+  if(e.key !== "Escape") return;
+  closeInspect();
+  closeCompareModal();
+}
+document.addEventListener("keydown", closeAllModalsOnEsc);
 
 /* =========================================================
    Button listeners
@@ -1288,6 +1307,11 @@ spinBtn.addEventListener("click", async () => {
 
   setStatus(`Done! Dropped ${count} weapon(s) from ${tier}.`);
   spinBtn.disabled = false;
+
+  // mobile: scroll to drops after spin
+  if (window.matchMedia && window.matchMedia("(max-width: 880px)").matches) {
+    document.getElementById("drops")?.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
 });
 
 showT1Btn.addEventListener("click", () => switchSection(filterT1(), showT1Btn));
@@ -1303,11 +1327,11 @@ searchInput.addEventListener("input", () => updateWeaponsGridWithFilters());
 (async function init() {
   ensureCompareUI();
   injectMobileToolbar();
+  injectFilterSortUI();
 
   await loadWeapons();
   currentBaseList = weapons;
 
-  injectFilterSortUI();
   setActiveButton(showAllBtn);
   updateWeaponsGridWithFilters();
 
