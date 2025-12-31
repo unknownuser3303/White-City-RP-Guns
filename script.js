@@ -1,17 +1,17 @@
 let allWeapons = [];
 
-// Fetch weapons.json with cache-busting
+// Load weapons.json with cache-busting
 function loadWeapons() {
   fetch('weapons.json?' + new Date().getTime())
     .then(res => res.json())
     .then(data => {
       allWeapons = data;
-      renderWeapons(data);
+      renderWeapons(allWeapons);
     })
     .catch(err => console.error('Error loading weapons.json:', err));
 }
 
-// Render weapon cards
+// Render all weapons in the list
 function renderWeapons(weapons) {
   const container = document.getElementById('weapons');
   container.innerHTML = '';
@@ -28,48 +28,79 @@ function renderWeapons(weapons) {
   });
 }
 
-// Single random weapon
-const randomBtn = document.getElementById('randomBtn');
-const randomResult = document.getElementById('randomResult');
+// Get random guns by tier definition
+function getRandomGunsByTier(tierName) {
+  let pool = [];
+  let count = 1;
 
-randomBtn.addEventListener('click', () => {
-  if (!allWeapons.length) return;
-  const weapon = allWeapons[Math.floor(Math.random() * allWeapons.length)];
-  randomResult.innerHTML = `
-    <div class="weapon-card tier-${weapon.tier}">
-      <h3>${weapon.name}</h3>
-      <span>Tier: ${weapon.tier}</span><br>
-      <span>Damage: ${weapon.damage}</span><br>
-      <span>Fire Rate: ${weapon.fireRate}</span>
-    </div>
-  `;
-});
+  switch(tierName) {
+    case "Test Drops":
+      pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
+      count = 2;
+      break;
 
-// Multi-random
-const multiRandomBtn = document.getElementById('multiRandomBtn');
-const randomCountInput = document.getElementById('randomCount');
-const multiRandomResult = document.getElementById('multiRandomResult');
+    case "Tier 1":
+      pool = allWeapons.filter(w => ["S","A","B"].includes(w.tier));
+      count = 4;
+      break;
 
-multiRandomBtn.addEventListener('click', () => {
-  if (!allWeapons.length) return;
-  let count = Math.min(parseInt(randomCountInput.value), allWeapons.length);
-  const shuffled = [...allWeapons].sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, count);
-  multiRandomResult.innerHTML = '';
-  selected.forEach(w => {
+    case "Tier 1.5":
+      pool = allWeapons.filter(w => ["F","B"].includes(w.tier));
+      count = 4;
+      break;
+
+    case "Tier 2":
+      pool = [...allWeapons]; // all guns
+      count = 6;
+      break;
+
+    case "Refill":
+      pool = [...allWeapons]; // all guns
+      count = 1;
+      break;
+
+    default:
+      pool = [...allWeapons];
+  }
+
+  // Shuffle and pick `count` guns
+  const shuffled = pool.sort(() => 0.5 - Math.random());
+
+  // Optional: reduce probability for B-tier guns in Tier 1
+  if (tierName === "Tier 1") {
+    const filteredShuffled = shuffled.filter(w => w.tier !== "B").concat(
+      shuffled.filter(w => w.tier === "B").slice(0, 1) // only 1 B-tier max
+    );
+    return filteredShuffled.slice(0, count);
+  }
+
+  return shuffled.slice(0, count);
+}
+
+// Handle tier-based randomizer
+const tierSelect = document.getElementById('tierSelect');
+const spinBtn = document.getElementById('spinBtn');
+const spinResult = document.getElementById('spinResult');
+
+spinBtn.addEventListener('click', () => {
+  const tier = tierSelect.value;
+  const selectedGuns = getRandomGunsByTier(tier);
+
+  spinResult.innerHTML = '';
+  selectedGuns.forEach(g => {
     const div = document.createElement('div');
-    div.className = 'weapon-card tier-' + w.tier;
+    div.className = 'weapon-card tier-' + g.tier;
     div.innerHTML = `
-      <h3>${w.name}</h3>
-      <span>Tier: ${w.tier}</span><br>
-      <span>Damage: ${w.damage}</span><br>
-      <span>Fire Rate: ${w.fireRate}</span>
+      <h3>${g.name}</h3>
+      <span>Tier: ${g.tier}</span><br>
+      <span>Damage: ${g.damage}</span><br>
+      <span>Fire Rate: ${g.fireRate}</span>
     `;
-    multiRandomResult.appendChild(div);
+    spinResult.appendChild(div);
   });
 });
 
-// Search filter
+// Old search functionality
 const search = document.getElementById('search');
 search.addEventListener('input', e => {
   const filtered = allWeapons.filter(w =>
