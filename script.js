@@ -1,208 +1,194 @@
-let allWeapons = [];
+// ====== EDIT THIS LIST if you want ======
+// IMPORTANT: these paths must exist in your repo under /images/weapons/
+const weapons = [
+  { name: "1911", tier: "A", fireRate: "Low", img: "images/weapons/1911.webp", stars: 1 },
+  { name: "CanikTP9", tier: "S", fireRate: "Medium", img: "images/weapons/CanikTP9.webp", stars: 2 },
+  { name: "Glock45", tier: "S", fireRate: "Medium", img: "images/weapons/Glock45.webp", stars: 2 },
+  { name: "Glock19x", tier: "S", fireRate: "Medium", img: "images/weapons/Glock19x.webp", stars: 2 },
+  { name: "Fn57", tier: "A", fireRate: "High", img: "images/weapons/Fn57.png", stars: 1 },
+  { name: "GlockG17Gen5", tier: "S", fireRate: "Medium", img: "images/weapons/GlockG17Gen5.webp", stars: 2 },
+  { name: "Glock19", tier: "S", fireRate: "Medium", img: "images/weapons/Glock19.webp", stars: 2 },
+  { name: "Glock43", tier: "S", fireRate: "Low", img: "images/weapons/Glock43.webp", stars: 2 },
+  { name: "Glock23", tier: "S", fireRate: "Medium", img: "images/weapons/Glock23.webp", stars: 2 },
+  { name: "G45", tier: "A", fireRate: "Medium", img: "images/weapons/G45.webp", stars: 1 },
 
-// Damage ranges (display only)
-const DAMAGE_RANGES = { S:"21–24", A:"23–26", B:"25–28", F:"27–36" };
+  { name: "HK45", tier: "S", fireRate: "Low", img: "images/weapons/HK45.webp", stars: 2 },
+  { name: "Glock19 Foregrip", tier: "B", fireRate: "Medium", img: "images/weapons/Glock19 Foregrip.webp", stars: 4 },
+  { name: "OliveGlock17", tier: "S", fireRate: "Medium", img: "images/weapons/OliveGlock17.webp", stars: 2 },
+  { name: "OliveGlock19x", tier: "S", fireRate: "Medium", img: "images/weapons/OliveGlock19x.webp", stars: 2 },
+  { name: "Walther P88", tier: "S", fireRate: "Medium", img: "images/weapons/Walther P88.webp", stars: 2 },
+  { name: "SigP320", tier: "S", fireRate: "Medium", img: "images/weapons/SigP320.webp", stars: 1 },
 
-function setStatus(msg) {
-  const el = document.getElementById("status");
-  if (el) el.textContent = msg;
-}
+  { name: "Glock 19 switch", tier: "B", fireRate: "Very High", img: "images/weapons/Glock 19 switch.png", stars: 4 },
+  { name: "Glock43mos", tier: "B", fireRate: "Low", img: "images/weapons/Glock43mos.webp", stars: 4 },
+  { name: "Glock45MOS", tier: "B", fireRate: "Medium", img: "images/weapons/Glock45MOS.webp", stars: 4 },
+  { name: "Glock19Switch", tier: "B", fireRate: "Very High", img: "images/weapons/Glock19Switch.webp", stars: 4 },
+
+  { name: "Fn57 (B)", tier: "B", fireRate: "High", img: "images/weapons/Fn57 (B).webp", stars: 4 },
+  { name: "Fnx45", tier: "B", fireRate: "Medium", img: "images/weapons/Fnx45.webp", stars: 4 },
+  { name: "G26 Switch", tier: "B", fireRate: "Very High", img: "images/weapons/G26 Switch.webp", stars: 4 },
+  { name: "G20 Switch", tier: "B", fireRate: "Very High", img: "images/weapons/G20 Switch.webp", stars: 4 },
+
+  { name: "ArpBinary", tier: "F", fireRate: "Very High", img: "images/weapons/ArpBinary.webp", stars: 5 },
+  { name: "OliveDraco", tier: "F", fireRate: "High", img: "images/weapons/OliveDraco.webp", stars: 5 },
+  { name: "Draco", tier: "F", fireRate: "High", img: "images/weapons/Draco.webp", stars: 5 },
+  { name: "KrissVector", tier: "F", fireRate: "Very High", img: "images/weapons/KrissVector.webp", stars: 5 },
+  { name: "MAC10", tier: "F", fireRate: "Very High", img: "images/weapons/MAC10.webp", stars: 4 },
+  { name: "SigMCX", tier: "F", fireRate: "High", img: "images/weapons/SigMCX.webp", stars: 5 }
+];
+
+const $ = (id) => document.getElementById(id);
+
+function setStatus(msg) { $("status").textContent = msg; }
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (m) => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[m]));
 }
 
-function makeCard(w) {
-  const card = document.createElement("div");
-  card.className = "weapon-card tier-" + w.tier;
-  const dmg = DAMAGE_RANGES[w.tier] || "—";
-  card.innerHTML = `
-    <h3>${escapeHtml(w.name)}</h3>
-    <div class="meta">
-      Tier: <b>${escapeHtml(w.tier)}</b><br/>
-      Damage: ${dmg}<br/>
-      Fire Rate: ${escapeHtml(w.fireRate)}
+function makeCard(w, extraClass = "") {
+  const div = document.createElement("div");
+  div.className = `card tier-${w.tier} ${extraClass}`.trim();
+
+  div.innerHTML = `
+    <div class="cardName">${escapeHtml(w.name)}</div>
+    <div class="cardImgWrap">
+      <img src="${escapeHtml(w.img)}" alt="${escapeHtml(w.name)}">
     </div>
+    <div class="cardStars">${"★".repeat(w.stars || 0)}</div>
   `;
-  return card;
+  return div;
 }
 
-function renderWeapons(list) {
-  const el = document.getElementById("weapons");
-  if (!el) return;
-  el.innerHTML = "";
-  list.forEach(w => el.appendChild(makeCard(w)));
+function renderAll(list) {
+  const root = $("allWeapons");
+  root.innerHTML = "";
+  list.forEach(w => root.appendChild(makeCard(w, "dropCard")));
 }
 
-function renderDrop(drop) {
-  const el = document.getElementById("dropResult");
-  if (!el) return;
-  el.innerHTML = "";
-  drop.forEach(w => el.appendChild(makeCard(w)));
+function renderDrops(list) {
+  const root = $("drops");
+  root.innerHTML = "";
+  list.forEach(w => root.appendChild(makeCard(w, "dropCard")));
 }
 
-// Weighted unique selection (no duplicates)
-function weightedPickUnique(items, count, weightFn) {
-  const picked = [];
-  const pool = [...items];
-
-  while (picked.length < count && pool.length > 0) {
-    const weights = pool.map(weightFn);
-    const total = weights.reduce((a,b)=>a+b,0);
-    let r = Math.random() * total;
-
-    let idx = 0;
-    for (; idx < pool.length; idx++) {
-      r -= weights[idx];
-      if (r <= 0) break;
-    }
-    picked.push(pool[idx]);
-    pool.splice(idx, 1);
+// ===== Tier Rules (edit if you want) =====
+function pickRandomFrom(list, n) {
+  const pool = [...list];
+  const out = [];
+  while (out.length < n && pool.length) {
+    out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
   }
-  return picked;
+  return out;
 }
 
-// ----- Tier rules (B hard-blocked in Tier 1) -----
-function getTierDrop(tierName) {
-  let pool = [];
-  let count = 1;
-
+function getDropList(tierName) {
+  // You can change these rules anytime
   if (tierName === "Test Drops") {
-    pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
-    count = 2;
-    return [...pool].sort(()=>0.5-Math.random()).slice(0,count);
+    return pickRandomFrom(weapons.filter(w => ["S","A"].includes(w.tier)), 2);
   }
-
   if (tierName === "Tier 1") {
-    // ✅ ONLY S/A. B is impossible here.
-    pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
-    count = 4;
-
-    // Boost ONLY Glock19 Foregrip
-    return weightedPickUnique(pool, count, (w) =>
-      w.name === "Glock19 Foregrip" ? 6 : 1
-    );
+    // 4 drops from S/A only
+    return pickRandomFrom(weapons.filter(w => ["S","A"].includes(w.tier)), 4);
   }
-
   if (tierName === "Tier 1.5") {
-    pool = allWeapons.filter(w => w.tier === "F" || w.tier === "B");
-    count = 4;
-    return [...pool].sort(()=>0.5-Math.random()).slice(0,count);
+    return pickRandomFrom(weapons.filter(w => ["F","B"].includes(w.tier)), 4);
   }
-
   if (tierName === "Tier 2") {
-    pool = [...allWeapons];
-    count = 6;
-    return [...pool].sort(()=>0.5-Math.random()).slice(0,count);
+    return pickRandomFrom(weapons, 6);
   }
-
   if (tierName === "Refill") {
-    pool = [...allWeapons];
-    count = 1;
-    return [...pool].sort(()=>0.5-Math.random()).slice(0,count);
+    return pickRandomFrom(weapons, 1);
   }
-
-  // fallback
-  pool = [...allWeapons];
-  return [...pool].sort(()=>0.5-Math.random()).slice(0,1);
+  return pickRandomFrom(weapons, 1);
 }
 
-// ===== CSGO SPIN =====
-function playCsgoSpin(finalDrop) {
-  const track = document.getElementById("spinTrack");
-  const wrapper = document.querySelector(".spin-area");
+// ===== REAL CS:GO ROLL =====
+// Builds a long strip of items and animates translateX until the WINNER is under the center marker.
+function csgoRollOnce(winner, poolForVisual) {
+  const strip = $("strip");
+  const mask = document.querySelector(".stripMask");
 
-  if (!track || !wrapper) {
-    renderDrop(finalDrop);
-    return;
+  // How many items in strip
+  const PRE = 40;   // items before winner
+  const POST = 12;  // items after winner
+  const TOTAL = PRE + 1 + POST;
+
+  // Build strip list
+  const rollItems = [];
+  for (let i = 0; i < PRE; i++) {
+    rollItems.push(poolForVisual[Math.floor(Math.random() * poolForVisual.length)]);
+  }
+  rollItems.push(winner);
+  for (let i = 0; i < POST; i++) {
+    rollItems.push(poolForVisual[Math.floor(Math.random() * poolForVisual.length)]);
   }
 
-  const winner = finalDrop[0];
-  const preCount = 40;
-  const postCount = 10;
+  // Render
+  strip.innerHTML = "";
+  rollItems.forEach(w => strip.appendChild(makeCard(w)));
 
-  const pre = [...allWeapons].sort(()=>0.5-Math.random()).slice(0, preCount);
-  const post = [...allWeapons].sort(()=>0.5-Math.random()).slice(0, postCount);
-  const roll = [...pre, winner, ...post];
+  // Reset transform instantly
+  strip.style.transition = "none";
+  strip.style.transform = "translateX(0px)";
+  strip.offsetHeight; // force reflow
 
-  track.innerHTML = "";
-  roll.forEach(w => track.appendChild(makeCard(w)));
+  // Find winner card position
+  const cards = strip.querySelectorAll(".card");
+  const winnerCard = cards[PRE];
 
-  track.style.transition = "none";
-  track.style.transform = "translateX(0)";
-  track.offsetHeight;
+  const maskCenter = mask.clientWidth / 2;
+  const winnerCenter = winnerCard.offsetLeft + (winnerCard.clientWidth / 2);
 
-  const cards = track.querySelectorAll(".weapon-card");
-  const winnerCard = cards[preCount];
+  // Target translateX so winnerCenter lines up with maskCenter (+ little jitter like CS:GO)
+  const jitter = (Math.random() * 40) - 20; // -20..+20
+  const target = Math.max(0, (winnerCenter - maskCenter) + jitter);
 
-  const centerOffset = (wrapper.clientWidth/2) - (winnerCard.clientWidth/2);
-  const winnerLeft = winnerCard.offsetLeft;
+  // Animate (CS:GO-ish easing)
+  strip.style.transition = "transform 4.6s cubic-bezier(.08,.85,.12,1)";
+  strip.style.transform = `translateX(-${target}px)`;
 
-  let target = winnerLeft - centerOffset;
-  target += Math.floor(Math.random()*40) - 20;
-  target = Math.max(0, target);
-
-  track.style.transition = "transform 4.2s cubic-bezier(.08,.85,.12,1)";
-  track.style.transform = `translateX(-${target}px)`;
-
-  setTimeout(() => renderDrop(finalDrop), 4300);
+  return new Promise((resolve) => setTimeout(resolve, 4700));
 }
 
-// ----- Load weapons -----
-function loadWeapons() {
-  setStatus("Loading weapons...");
-  fetch("weapons.json?" + Date.now())
-    .then(res => res.json())
-    .then(data => {
-      allWeapons = data;
-      renderWeapons(allWeapons);
-      setStatus(`Loaded ${allWeapons.length} weapons.`);
-    })
-    .catch(err => {
-      console.error(err);
-      setStatus("Failed to load weapons.json.");
-    });
+// ===== Wire UI =====
+function init() {
+  renderAll(weapons);
+
+  $("search").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) return renderAll(weapons);
+    renderAll(weapons.filter(w => w.name.toLowerCase().includes(q)));
+  });
+
+  $("randomizeBtn").addEventListener("click", async () => {
+    const btn = $("randomizeBtn");
+    btn.disabled = true;
+
+    const tierName = $("tierSelect").value;
+    setStatus(`Rolling: ${tierName}...`);
+
+    // Choose your drops based on tier rules
+    const drops = getDropList(tierName);
+
+    // Pool used for visuals (so roll looks correct to chosen tier)
+    const visualPool = (() => {
+      if (tierName === "Tier 1") return weapons.filter(w => ["S","A"].includes(w.tier));
+      if (tierName === "Test Drops") return weapons.filter(w => ["S","A"].includes(w.tier));
+      if (tierName === "Tier 1.5") return weapons.filter(w => ["F","B"].includes(w.tier));
+      return weapons;
+    })();
+
+    // Roll animation lands on FIRST drop (winner). Then show all drops.
+    await csgoRollOnce(drops[0], visualPool);
+
+    renderDrops(drops);
+    setStatus(`Dropped ${drops.length} weapon(s) from ${tierName}.`);
+    btn.disabled = false;
+  });
+
+  setStatus("Ready.");
 }
 
-// ----- UI -----
-function wireUI() {
-  const btn = document.getElementById("randomizeBtn");
-  const tierSelect = document.getElementById("tierSelect");
-  const search = document.getElementById("search");
-
-  if (btn && tierSelect) {
-    btn.addEventListener("click", () => {
-      const tier = tierSelect.value;
-
-      // 🔎 On-screen proof of what tier string is being read
-      if (tier === "Tier 1") {
-        setStatus('Using Tier 1 pool: S/A only (B blocked).');
-      } else {
-        setStatus(`Using tier: ${tier}`);
-      }
-
-      const drop = getTierDrop(tier);
-
-      // 🔎 If ANY B slipped in, we show a warning (should never happen in Tier 1)
-      if (tier === "Tier 1" && drop.some(w => w.tier === "B")) {
-        setStatus("❌ BUG: Tier 1 returned a B gun. Your page is still using old JS.");
-      }
-
-      playCsgoSpin(drop);
-    });
-  }
-
-  if (search) {
-    search.addEventListener("input", e => {
-      const q = e.target.value.toLowerCase();
-      renderWeapons(allWeapons.filter(w => w.name.toLowerCase().includes(q)));
-    });
-  }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  wireUI();
-  loadWeapons();
-});
+window.addEventListener("DOMContentLoaded", init);
