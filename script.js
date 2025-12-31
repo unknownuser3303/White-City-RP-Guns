@@ -1,113 +1,135 @@
 let allWeapons = [];
 
-// Load weapons.json with cache-busting
+// Always fetch latest JSON from GitHub Pages
 function loadWeapons() {
-  fetch('weapons.json?' + new Date().getTime())
-    .then(res => res.json())
-    .then(data => {
+  setStatus("Loading weapons...");
+  fetch("weapons.json?" + Date.now())
+    .then((res) => res.json())
+    .then((data) => {
       allWeapons = data;
       renderWeapons(allWeapons);
+      setStatus(`Loaded ${allWeapons.length} weapons.`);
     })
-    .catch(err => console.error('Error loading weapons.json:', err));
+    .catch((err) => {
+      console.error(err);
+      setStatus("Failed to load weapons.json (check JSON + file name).");
+    });
 }
 
-// Render all weapons in the list
+function setStatus(msg) {
+  const el = document.getElementById("status");
+  if (el) el.textContent = msg;
+}
+
 function renderWeapons(weapons) {
-  const container = document.getElementById('weapons');
-  container.innerHTML = '';
-  weapons.forEach(w => {
-    const card = document.createElement('div');
-    card.className = 'weapon-card tier-' + w.tier;
-    card.innerHTML = `
-      <h3>${w.name}</h3>
-      <span>Tier: ${w.tier}</span><br>
-      <span>Damage: ${w.damage}</span><br>
-      <span>Fire Rate: ${w.fireRate}</span>
-    `;
-    container.appendChild(card);
+  const container = document.getElementById("weapons");
+  container.innerHTML = "";
+
+  weapons.forEach((w) => {
+    container.appendChild(makeCard(w));
   });
 }
 
-// Get random guns by tier definition
-function getRandomGunsByTier(tierName) {
+function makeCard(w) {
+  const card = document.createElement("div");
+  card.className = "weapon-card tier-" + w.tier;
+
+  card.innerHTML = `
+    <h3>${escapeHtml(w.name)}</h3>
+    <div class="meta">
+      Tier: <b>${escapeHtml(w.tier)}</b><br/>
+      Damage: ${escapeHtml(String(w.damage))}<br/>
+      Fire Rate: ${escapeHtml(w.fireRate)}
+    </div>
+  `;
+  return card;
+}
+
+// ---- Tier drop rules ----
+function getTierDrop(tierName) {
   let pool = [];
   let count = 1;
 
-  switch(tierName) {
+  switch (tierName) {
     case "Test Drops":
-      pool = allWeapons.filter(w => w.tier === "S" || w.tier === "A");
+      pool = allWeapons.filter((w) => w.tier === "S" || w.tier === "A");
       count = 2;
       break;
 
     case "Tier 1":
-      pool = allWeapons.filter(w => ["S","A","B"].includes(w.tier));
+      // S/A/B allowed, but B should be "low luck"
+      pool = allWeapons.filter((w) => ["S", "A", "B"].includes(w.tier));
       count = 4;
       break;
 
     case "Tier 1.5":
-      pool = allWeapons.filter(w => ["F","B"].includes(w.tier));
+      pool = allWeapons.filter((w) => ["F", "B"].includes(w.tier));
       count = 4;
       break;
 
     case "Tier 2":
-      pool = [...allWeapons]; // all guns
+      pool = [...allWeapons]; // all tiers
       count = 6;
       break;
 
     case "Refill":
-      pool = [...allWeapons]; // all guns
+      pool = [...allWeapons]; // all tiers
       count = 1;
       break;
 
     default:
       pool = [...allWeapons];
+      count = 1;
   }
 
-  // Shuffle and pick `count` guns
-  const shuffled = pool.sort(() => 0.5 - Math.random());
+  // Shuffle pool
+  const shuffled = [...pool].sort(() => 0.5 - Math.random());
 
-  // Optional: reduce probability for B-tier guns in Tier 1
+  // Tier 1 "low luck B": allow max 1 B in the 4
   if (tierName === "Tier 1") {
-    const filteredShuffled = shuffled.filter(w => w.tier !== "B").concat(
-      shuffled.filter(w => w.tier === "B").slice(0, 1) // only 1 B-tier max
-    );
-    return filteredShuffled.slice(0, count);
+    const nonB = shuffled.filter((w) => w.tier !== "B");
+    const bOnly = shuffled.filter((w) => w.tier === "B");
+    const combined = nonB.concat(bOnly.slice(0, 1));
+    return combined.slice(0, count);
   }
 
   return shuffled.slice(0, count);
 }
 
-// Handle tier-based randomizer
-const tierSelect = document.getElementById('tierSelect');
-const spinBtn = document.getElementById('spinBtn');
-const spinResult = document.getElementById('spinResult');
+function renderDrop(drop) {
+  const container = document.getElementById("dropResult");
+  container.innerHTML = "";
+  drop.forEach((w) => container.appendChild(makeCard(w)));
+}
 
-spinBtn.addEventListener('click', () => {
-  const tier = tierSelect.value;
-  const selectedGuns = getRandomGunsByTier(tier);
-
-  spinResult.innerHTML = '';
-  selectedGuns.forEach(g => {
-    const div = document.createElement('div');
-    div.className = 'weapon-card tier-' + g.tier;
-    div.innerHTML = `
-      <h3>${g.name}</h3>
-      <span>Tier: ${g.tier}</span><br>
-      <span>Damage: ${g.damage}</span><br>
-      <span>Fire Rate: ${g.fireRate}</span>
-    `;
-    spinResult.appendChild(div);
-  });
+// ---- UI wiring ----
+document.getElementById("randomizeBtn").addEventListener("click", () => {
+  if (!allWeapons.length) {
+    setStatus("Weapons not loaded yet.");
+    return;
+  }
+  const tier = document.getElementById("tierSelect").value;
+  const drop = getTierDrop(tier);
+  renderDrop(drop);
+  setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
 });
 
-// Old search functionality
-const search = document.getElementById('search');
-search.addEventListener('input', e => {
-  const filtered = allWeapons.filter(w =>
-    w.name.toLowerCase().includes(e.target.value.toLowerCase())
-  );
+document.getElementById("search").addEventListener("input", (e) => {
+  const q = e.target.value.toLowerCase();
+  const filtered = allWeapons.filter((w) => w.name.toLowerCase().includes(q));
   renderWeapons(filtered);
 });
 
-// Load weapons on page load
+// Simple HTML escape so names can't break layout
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
+}
+
+// Start
 loadWeapons();
