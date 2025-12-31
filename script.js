@@ -30,7 +30,6 @@ function slug(n){
     .replace(/^-|-$/g, "");
 }
 
-// tries MANY variants to match your repo (case-sensitive + double extensions)
 function imageCandidates(name){
   const baseSlug = slug(name);
   const baseRaw  = name.replace(/\(B\)/g,"").replace(/\(b\)/g,"").trim();
@@ -47,7 +46,6 @@ function imageCandidates(name){
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
 
-    // known messy ones from your screenshot
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -55,18 +53,15 @@ function imageCandidates(name){
     `${dir}glock-19-switch.png.png`,
     `${dir}glock-19-switch.png`
   ];
-
   return [...new Set(list)];
 }
 
-function starsHTML(stars){
-  return "★".repeat(stars || 0);
-}
+function starsHTML(stars){ return "★".repeat(stars || 0); }
 
 function makeCard(w){
-  const name = w.name || w.n;
-  const tier = w.tier || w.t;
-  const stars = w.stars || w.s || 0;
+  const name = w.name;
+  const tier = w.tier;
+  const stars = w.stars || 0;
 
   const div = document.createElement("div");
   div.className = `card tier-${tier}`;
@@ -96,7 +91,6 @@ function makeCard(w){
 
   img.onerror = tryNext;
   tryNext();
-
   return div;
 }
 
@@ -154,10 +148,31 @@ function addDrop(w){
   dropsDiv.appendChild(makeCard(w));
 }
 
+/* Filters */
 function filterT1(){ return weapons.filter(w => ["S","A"].includes(w.tier)); }
 function filterT15(){ return weapons.filter(w => ["B","F"].includes(w.tier)); }
 function filterT2(){ return weapons; }
 
+/* Transition helpers */
+function setActiveButton(btn){
+  [showT1Btn, showT15Btn, showT2Btn, showAllBtn].forEach(b => b?.classList.remove("is-active"));
+  btn?.classList.add("is-active");
+}
+
+function switchGrid(list, activeBtn){
+  setActiveButton(activeBtn);
+
+  allWeaponsDiv.classList.add("is-switching");
+
+  setTimeout(() => {
+    renderGrid(allWeaponsDiv, list);
+    requestAnimationFrame(() => {
+      allWeaponsDiv.classList.remove("is-switching");
+    });
+  }, 220);
+}
+
+/* Spin */
 spinBtn.addEventListener("click", async () => {
   spinBtn.disabled = true;
   dropsDiv.innerHTML = "";
@@ -176,7 +191,6 @@ spinBtn.addEventListener("click", async () => {
   const used = new Set();
 
   for (let i = 0; i < cfg.count; i++) {
-    // avoid duplicates if possible
     let winner = pickRandom(cfg.pool);
     let tries = 0;
     while (used.has(winner.name) && tries < 25) {
@@ -187,7 +201,6 @@ spinBtn.addEventListener("click", async () => {
 
     setStatus(`Rolling ${i+1}/${cfg.count}...`);
     await rollOnce(winner, cfg.visual);
-
     addDrop(winner);
   }
 
@@ -195,22 +208,23 @@ spinBtn.addEventListener("click", async () => {
   spinBtn.disabled = false;
 });
 
-// SHOW BUTTONS
-showT1Btn.addEventListener("click", () => renderGrid(allWeaponsDiv, filterT1()));
-showT15Btn.addEventListener("click", () => renderGrid(allWeaponsDiv, filterT15()));
-showT2Btn.addEventListener("click", () => renderGrid(allWeaponsDiv, filterT2()));
-showAllBtn.addEventListener("click", () => renderGrid(allWeaponsDiv, weapons));
+/* Show buttons (with transition) */
+showT1Btn.addEventListener("click", () => switchGrid(filterT1(), showT1Btn));
+showT15Btn.addEventListener("click", () => switchGrid(filterT15(), showT15Btn));
+showT2Btn.addEventListener("click", () => switchGrid(filterT2(), showT2Btn));
+showAllBtn.addEventListener("click", () => switchGrid(weapons, showAllBtn));
 
-// SEARCH
+/* Search */
 searchInput.addEventListener("input", (e) => {
   const q = e.target.value.trim().toLowerCase();
-  if (!q) return renderGrid(allWeaponsDiv, weapons);
-  renderGrid(allWeaponsDiv, weapons.filter(w => w.name.toLowerCase().includes(q)));
+  if (!q) return switchGrid(weapons, showAllBtn);
+  switchGrid(weapons.filter(w => w.name.toLowerCase().includes(q)), null);
 });
 
-// INIT
+/* Init */
 (async function init(){
   await loadWeapons();
   renderGrid(allWeaponsDiv, weapons);
+  setActiveButton(showAllBtn);
   setStatus("Ready.");
 })();
