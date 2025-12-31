@@ -1,19 +1,15 @@
 let allWeapons = [];
 
-// Always fetch latest JSON from GitHub Pages
-function loadWeapons() {
-  setStatus("Loading weapons...");
-  fetch("weapons.json?" + Date.now())
-    .then((res) => res.json())
-    .then((data) => {
-      allWeapons = data;
-      renderWeapons(allWeapons);
-      setStatus(`Loaded ${allWeapons.length} weapons.`);
-    })
-    .catch((err) => {
-      console.error(err);
-      setStatus("Failed to load weapons.json (check JSON + file name).");
-    });
+// Tier damage ranges
+const DAMAGE_RANGES = {
+  S: [21, 24],
+  A: [23, 26],
+  B: [25, 28],
+  F: [27, 36],
+};
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function setStatus(msg) {
@@ -21,17 +17,19 @@ function setStatus(msg) {
   if (el) el.textContent = msg;
 }
 
-function renderWeapons(weapons) {
-  const container = document.getElementById("weapons");
-  if (!container) return;
-  container.innerHTML = "";
-  weapons.forEach((w) => container.appendChild(makeCard(w)));
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
 }
 
 function makeCard(w) {
   const card = document.createElement("div");
   card.className = "weapon-card tier-" + w.tier;
-
   card.innerHTML = `
     <h3>${escapeHtml(w.name)}</h3>
     <div class="meta">
@@ -43,7 +41,32 @@ function makeCard(w) {
   return card;
 }
 
-// ---- Tier drop rules ----
+function renderWeapons(weapons) {
+  const container = document.getElementById("weapons");
+  if (!container) return;
+  container.innerHTML = "";
+  weapons.forEach((w) => container.appendChild(makeCard(w)));
+}
+
+function renderDrop(drop) {
+  const container = document.getElementById("dropResult");
+  if (!container) return;
+  container.innerHTML = "";
+  drop.forEach((w) => container.appendChild(makeCard(w)));
+}
+
+// Apply tier damage ranges ONCE per page load
+function applyTierDamages(weapons) {
+  return weapons.map(w => {
+    const range = DAMAGE_RANGES[w.tier] || [20, 30];
+    return {
+      ...w,
+      damage: randInt(range[0], range[1])
+    };
+  });
+}
+
+// ----- Tier rules -----
 function getTierDrop(tierName) {
   let pool = [];
   let count = 1;
@@ -81,7 +104,7 @@ function getTierDrop(tierName) {
 
   const shuffled = [...pool].sort(() => 0.5 - Math.random());
 
-  // Tier 1: low luck B (max 1 B)
+  // Tier 1: B is low luck -> max 1 B
   if (tierName === "Tier 1") {
     const nonB = shuffled.filter((w) => w.tier !== "B");
     const bOnly = shuffled.filter((w) => w.tier === "B");
@@ -92,47 +115,74 @@ function getTierDrop(tierName) {
   return shuffled.slice(0, count);
 }
 
-function renderDrop(drop) {
-  const container = document.getElementById("dropResult");
-  if (!container) return;
-  container.innerHTML = "";
-  drop.forEach((w) => container.appendChild(makeCard(w)));
-}
-
-// ---- Spin animation ----
-function playSpinAnimation(finalDrop) {
+// ===== REAL CSGO STYLE SPIN =====
+function playCsgoSpin(finalDrop) {
   const track = document.getElementById("spinTrack");
-  const wrapper = track ? track.parentElement : null;
-
-  // If spin area not in HTML, just show results normally
+  const wrapper = document.querySelector(".spin-area");
   if (!track || !wrapper) {
     renderDrop(finalDrop);
     return;
   }
 
+  // Winner = first item in the drop
+  const winner = finalDrop[0];
+
+  const preCount = 40;
+  const postCount = 10;
+
+  const pre = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, preCount);
+  const post = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, postCount);
+
+  const roll = [...pre, winner, ...post];
+
   track.innerHTML = "";
+  roll.forEach((w) => track.appendChild(makeCard(w)));
 
-  // Fake scroll items
-  const fakePool = [...allWeapons].sort(() => 0.5 - Math.random()).slice(0, 20);
-  fakePool.forEach((w) => track.appendChild(makeCard(w)));
-
-  // Add the final drop at the end so it "lands" on them
-  finalDrop.forEach((w) => track.appendChild(makeCard(w)));
-
-  // Reset position
+  // Reset
   track.style.transition = "none";
   track.style.transform = "translateX(0)";
-  track.offsetHeight; // force reflow
+  track.offsetHeight;
 
-  // Animate across
-  track.style.transition = "transform 2.6s cubic-bezier(.12,.75,.18,1)";
-  const shift = track.scrollWidth - wrapper.clientWidth;
-  track.style.transform = `translateX(-${Math.max(0, shift)}px)`;
+  const cards = track.querySelectorAll(".weapon-card");
+  const winnerIndex = preCount;
+  const winnerCard = cards[winnerIndex];
 
-  setTimeout(() => renderDrop(finalDrop), 2700);
+  const centerOffset = (wrapper.clientWidth / 2) - (winnerCard.clientWidth / 2);
+  const winnerLeft = winnerCard.offsetLeft;
+
+  let target = winnerLeft - centerOffset;
+
+  // jitter
+  const jitter = Math.floor(Math.random() * 40) - 20;
+  target = Math.max(0, target + jitter);
+
+  track.style.transition = "transform 4.2s cubic-bezier(.08,.85,.12,1)";
+  track.style.transform = `translateX(-${target}px)`;
+
+  setTimeout(() => {
+    renderDrop(finalDrop);
+  }, 4300);
 }
 
-// ---- UI wiring ----
+// ----- Load weapons.json (cache busted) -----
+function loadWeapons() {
+  setStatus("Loading weapons...");
+  fetch("weapons.json?" + Date.now())
+    .then((res) => res.json())
+    .then((data) => {
+      // apply tier-based damage ranges once
+      allWeapons = applyTierDamages(data);
+
+      renderWeapons(allWeapons);
+      setStatus(`Loaded ${allWeapons.length} weapons.`);
+    })
+    .catch((err) => {
+      console.error(err);
+      setStatus("Failed to load weapons.json (check JSON).");
+    });
+}
+
+// ----- UI wiring -----
 function wireUI() {
   const btn = document.getElementById("randomizeBtn");
   const tierSelect = document.getElementById("tierSelect");
@@ -146,7 +196,8 @@ function wireUI() {
       }
       const tier = tierSelect.value;
       const drop = getTierDrop(tier);
-      playSpinAnimation(drop);
+
+      playCsgoSpin(drop);
       setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
     });
   }
@@ -160,18 +211,6 @@ function wireUI() {
   }
 }
 
-// Simple HTML escape
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (m) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[m]));
-}
-
-// Start AFTER page loads
 window.addEventListener("DOMContentLoaded", () => {
   wireUI();
   loadWeapons();
