@@ -1,59 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
   <title>White City Weapons</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wrap">
-    <header class="top">
-      <h1>White City Weapons</h1>
-      <p class="sub">CS:GO style drop roll</p>
-    </header>
 
-    <section class="panel">
-      <div class="controls">
-        <label class="label">Choose Tier:</label>
+<h1>White City Weapons</h1>
 
-        <select id="tierSelect" class="select">
-          <option>Test Drops</option>
-          <option selected>Tier 1</option>
-          <option>Tier 1.5</option>
-          <option>Tier 2</option>
-          <option>Refill</option>
-        </select>
+<div class="controls">
+  <select id="tierSelect">
+    <option>Test Drops</option>
+    <option selected>Tier 1</option>
+    <option>Tier 1.5</option>
+    <option>Tier 2</option>
+    <option>Refill</option>
+  </select>
+  <button id="spinBtn">Randomize</button>
+  <span id="status">Ready</span>
+</div>
 
-        <button id="randomizeBtn" class="btn">Randomize</button>
-
-        <div id="status" class="status">Ready.</div>
-      </div>
-
-      <!-- CS:GO ROLL AREA -->
-      <div class="rollArea">
-        <div class="marker"></div>
-        <div class="stripMask">
-          <div id="strip" class="strip"></div>
-        </div>
-      </div>
-
-      <h2 class="dropsTitle">Your drops</h2>
-      <div id="drops" class="drops"></div>
-    </section>
-
-    <section class="panel">
-      <div class="searchRow">
-        <h2>All Weapons</h2>
-        <input id="search" class="search" placeholder="Search weapons..." />
-      </div>
-
-      <div id="allWeapons" class="grid"></div>
-    </section>
-
-    <footer class="foot">Hosted on GitHub Pages</footer>
+<div class="rollArea">
+  <div class="marker"></div>
+  <div class="mask">
+    <div id="strip" class="strip"></div>
   </div>
+</div>
 
-  <script src="script.js"></script>
+<h2>Your Drops</h2>
+<div id="drops" class="drops"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
