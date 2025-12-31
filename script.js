@@ -137,6 +137,9 @@ document.getElementById("randomizeBtn").addEventListener("click", () => {
   }
   const tier = document.getElementById("tierSelect").value;
   const drop = getTierDrop(tier);
+playSpinAnimation(drop);
+setStatus(`Dropped ${drop.length} weapon(s) from ${tier}.`);
+
   
 
 document.getElementById("search").addEventListener("input", (e) => {
