@@ -182,3 +182,24 @@ button:hover{
   margin: 0 auto 12px;
   filter: drop-shadow(0 0 20px rgba(255,255,255,0.15));
 }
+.spin-wrapper{
+  overflow: hidden;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin-top: 12px;
+  background: #0b0b12;
+}
+
+.spin-track{
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  transform: translateX(0);
+  transition: transform 2.6s cubic-bezier(.12,.75,.18,1);
+}
+
+.spin-track .weapon-card{
+  min-width: 220px;
+  flex-shrink: 0;
+}
