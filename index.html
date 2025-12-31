@@ -1,36 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>White City Weapons</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>White City RP Guns</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="app">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="panelTitle">Randomize</div>
+        <div class="panelBody">
+          <label class="miniLabel" for="tierSelect">Choose Tier</label>
+          <select id="tierSelect" class="uiSelect">
+            <option>Test Drops</option>
+            <option selected>Tier 1</option>
+            <option>Tier 1.5</option>
+            <option>Tier 2</option>
+            <option>Refill</option>
+          </select>
 
-<h1>White City Weapons</h1>
+          <button id="spinBtn" class="uiBtn primary">Randomize</button>
+          <div id="status" class="statusText">Ready.</div>
+        </div>
+      </div>
 
-<div class="controls">
-  <select id="tierSelect">
-    <option>Test Drops</option>
-    <option selected>Tier 1</option>
-    <option>Tier 1.5</option>
-    <option>Tier 2</option>
-    <option>Refill</option>
-  </select>
-  <button id="spinBtn">Randomize</button>
-  <span id="status">Ready</span>
-</div>
+      <div class="panel">
+        <div class="panelTitle">Show Weapons</div>
+        <div class="panelBody">
+          <button id="showT1Btn" class="uiBtn">Show T1 Guns</button>
+          <button id="showT15Btn" class="uiBtn">Show T1.5 Guns</button>
+          <button id="showT2Btn" class="uiBtn">Show T2 Guns</button>
+          <button id="showAllBtn" class="uiBtn ghost">Show All</button>
+        </div>
+      </div>
+    </aside>
 
-<div class="rollArea">
-  <div class="marker"></div>
-  <div class="mask">
-    <div id="strip" class="strip"></div>
+    <!-- MAIN -->
+    <main class="main">
+      <h1 class="title">White City Weapons</h1>
+
+      <!-- ROLL AREA -->
+      <section class="rollArea">
+        <div class="marker"></div>
+        <div class="mask">
+          <div id="strip" class="strip"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="h2">Your Drops</h2>
+        <div id="drops" class="grid"></div>
+      </section>
+
+      <section class="section">
+        <div class="row">
+          <h2 class="h2">All Weapons</h2>
+          <input id="search" class="search" placeholder="Search..." />
+        </div>
+        <div id="allWeapons" class="grid"></div>
+      </section>
+
+      <div class="footer">Hosted on GitHub Pages</div>
+    </main>
   </div>
-</div>
 
-<h2>Your Drops</h2>
-<div id="drops" class="drops"></div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
