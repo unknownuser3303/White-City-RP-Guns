@@ -1,46 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>White City Weapons</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Windy City Weapons</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>White City Weapons</h1>
-    <p>Weapon stats & tiers</p>
+  <header class="site-header">
+    <h1>Windy City Weapons</h1>
+    <p>Tiered drop randomizer</p>
   </header>
 
-  <input type="text" id="search" placeholder="Search weapons...">
+  <main class="wrap">
 
-  <button id="randomBtn">Random Weapon</button>
-  <div id="randomResult"></div>
+    <section class="panel">
+      <h2 class="panel-title">Randomize</h2>
 
-  <div id="multiRandom">
-    <input type="number" id="randomCount" min="1" value="3">
-    <button id="multiRandomBtn">Randomize Weapons</button>
-  </div>
-  <div id="multiRandomResult"></div>
+      <div class="controls">
+        <label for="tierSelect">Choose Tier:</label>
+        <select id="tierSelect">
+          <option value="Test Drops">Test Drops (2 guns, S/A)</option>
+          <option value="Tier 1">Tier 1 (4 guns, S/A + low luck B)</option>
+          <option value="Tier 1.5">Tier 1.5 (4 guns, F/B)</option>
+          <option value="Tier 2">Tier 2 (6 guns, all tiers)</option>
+          <option value="Refill">Refill (1 gun, all tiers)</option>
+        </select>
 
-  <div id="weapons" class="weapon-grid"></div>
+        <button id="randomizeBtn">Randomize</button>
+      </div>
 
-  <footer>
+      <div class="drops-title">Your drops</div>
+      <div id="dropResult" class="drops-grid"></div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">All Weapons</h2>
+      <input id="search" class="search" type="text" placeholder="Search weapons..." />
+      <div id="weapons" class="weapon-grid"></div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
     <p>Hosted on GitHub Pages</p>
   </footer>
 
   <script src="script.js"></script>
 </body>
 </html>
-<div id="tierRandomizer">
-  <label for="tierSelect">Choose Tier:</label>
-  <select id="tierSelect">
-    <option value="Test Drops">Test Drops</option>
-    <option value="Tier 1">Tier 1</option>
-    <option value="Tier 1.5">Tier 1.5</option>
-    <option value="Tier 2">Tier 2</option>
-    <option value="Refill">Refill</option>
-  </select>
-  <button id="spinBtn">Spin</button>
-  <div id="spinResult"></div>
-</div>
