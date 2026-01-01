@@ -29,10 +29,10 @@ let barWrap = null, barFill = null, barVal = null, barMin = null, barMax = null;
 function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 
 /* =========================================================
-   CSS injector (marker highlight + mobile + compare modal + toolbar)
+   CSS injector
    ========================================================= */
 (function injectCSS(){
-  const id = "wc_full_css_v1";
+  const id = "wc_full_css_v2";
   if (document.getElementById(id)) return;
   const st = document.createElement("style");
   st.id = id;
@@ -43,6 +43,26 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       outline: 2px solid rgba(80,230,255,.75);
       box-shadow: 0 0 0 3px rgba(80,230,255,.16), 0 18px 45px rgba(0,0,0,.65);
       transition: transform 80ms linear, box-shadow 80ms linear, outline 80ms linear;
+    }
+
+    /* Motion blur during fast phase */
+    .strip.is-fast .card{
+      filter: blur(2.2px) saturate(1.08);
+      transform: translateZ(0);
+    }
+    .strip.is-slow .card{
+      filter: blur(0px);
+    }
+
+    /* 3D tilt (desktop only) */
+    @media (hover:hover) and (pointer:fine){
+      .card{
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .card .cardImgWrap img{
+        transform: translateZ(22px);
+      }
     }
 
     /* F-tier glow burst */
@@ -97,9 +117,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       letter-spacing: .14em;
       cursor:pointer;
     }
-    .compareToast button:disabled{
-      opacity:.45; cursor:not-allowed;
-    }
+    .compareToast button:disabled{ opacity:.45; cursor:not-allowed; }
 
     /* Compare Modal */
     #compareModal{
@@ -117,7 +135,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
     }
     .compareCard{
       position: relative;
-      width: min(980px, calc(100% - 24px));
+      width: min(1160px, calc(100% - 24px));
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,.14);
       background: rgba(12,12,22,.92);
@@ -148,11 +166,11 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
     }
     .compareBody{
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       padding: 14px;
     }
-    @media(max-width: 820px){ .compareBody{ grid-template-columns: 1fr; } }
+    @media(max-width: 980px){ .compareBody{ grid-template-columns: 1fr; } }
     .comparePane{
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,.10);
@@ -161,12 +179,31 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       display:grid;
       gap: 10px;
     }
+    .comparePane.is-hidden{ display:none; }
     .cmpName{
       font-size: 15px;
       font-weight: 900;
       letter-spacing: .10em;
       text-transform: uppercase;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      justify-content:space-between;
     }
+    .bestBadge{
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,215,90,.55);
+      background: rgba(255,215,90,.10);
+      color: rgba(255,235,170,.95);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display:none;
+    }
+    .bestBadge.show{ display:inline-flex; }
+
     .cmpTier{
       display:inline-flex;
       width: fit-content;
@@ -181,7 +218,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
     }
     .cmpImg{
       width: 100%;
-      max-width: 420px;
+      max-width: 360px;
       aspect-ratio: 1/1;
       object-fit: cover;
       border-radius: 16px;
@@ -202,6 +239,11 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       font-size: 12px; letter-spacing: .10em;
       color: rgba(255,255,255,.72);
     }
+    .barLabel .is-best{
+      color: rgba(120,240,170,.95);
+      font-weight: 900;
+      text-shadow: 0 0 18px rgba(120,240,170,.25);
+    }
     .barTrack{
       height: 12px;
       border-radius: 999px;
@@ -213,6 +255,10 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, rgba(80,230,255,.55), rgba(180,90,255,.55), rgba(255,205,80,.55));
+    }
+    .barFill.is-best{
+      filter: saturate(1.2);
+      box-shadow: 0 0 0 2px rgba(120,240,170,.12) inset;
     }
 
     /* Mobile toolbar */
@@ -247,7 +293,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       background: linear-gradient(180deg, rgba(80,230,255,.18), rgba(80,230,255,.08));
     }
 
-    /* Mobile: ensure whole page is visible and not cut off */
+    /* Mobile: ensure whole page is visible */
     @media (max-width: 880px){
       html, body{ height:auto; min-height:100%; }
       .app{ min-height: 100vh; height:auto !important; }
@@ -256,6 +302,7 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       .uiBtn, .uiSelect, .search{ min-height: 48px !important; border-radius: 16px !important; }
       .rollArea{ margin-top: 10px; }
       .mask{ width:100%; overflow:hidden; }
+      .mobileToolbar{ display:block; }
     }
   `;
   document.head.appendChild(st);
@@ -389,7 +436,6 @@ function beep({ freq=900, dur=0.025, type="square", vol=0.05 }={}){
     o.stop(t + dur + 0.02);
   }catch{}
 }
-
 function playTick(){
   beep({ freq: 1650, dur: 0.018, type: "square", vol: 0.040 });
   setTimeout(()=> beep({ freq: 980, dur: 0.012, type: "square", vol: 0.022 }), 6);
@@ -405,32 +451,47 @@ function playHit(tier){
   }
 }
 
-/* Audio UI injected in sidebar */
-(function injectAudioUI(){
+/* =========================================================
+   Duplicate protection toggle (saved)
+   ========================================================= */
+const SETTINGS_KEY = "wc_settings_v1";
+const settings = {
+  dupProtect: true
+};
+(function loadSettings(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+    if (saved && typeof saved === "object") {
+      if (typeof saved.dupProtect === "boolean") settings.dupProtect = saved.dupProtect;
+    }
+  } catch {}
+})();
+function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} }
+
+/* Sidebar UI (Audio + Duplicate toggle) */
+(function injectSidebarUI(){
   const sidebar = document.querySelector(".sidebar");
   if (!sidebar) return;
 
-  const block = document.createElement("div");
-  block.className = "panelBlock";
-  block.innerHTML = `
+  // Audio panel (if you already had one, this still works; simple + safe)
+  const audioPanel = document.createElement("div");
+  audioPanel.className = "panel";
+  audioPanel.innerHTML = `
     <div class="panelTitle">Audio</div>
     <div class="panelBody" style="gap:10px;">
       <button id="muteBtn" class="uiBtn ghost" style="justify-content:center;">
         ${audioState.muted ? "Unmute" : "Mute"}
       </button>
-
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.7);">Volume</div>
         <input id="volSlider" type="range" min="0" max="1" step="0.01" value="${audioState.volume}" style="flex:1;">
       </div>
     </div>
   `;
-  sidebar.appendChild(document.createElement("div")).style.height = "10px";
-  sidebar.appendChild(block);
+  sidebar.appendChild(audioPanel);
 
-  const muteBtn = block.querySelector("#muteBtn");
-  const volSlider = block.querySelector("#volSlider");
-
+  const muteBtn = audioPanel.querySelector("#muteBtn");
+  const volSlider = audioPanel.querySelector("#volSlider");
   muteBtn.addEventListener("click", ()=>{
     unlockAudioOnce();
     audioState.muted = !audioState.muted;
@@ -438,11 +499,36 @@ function playHit(tier){
     saveAudioSettings();
     if (!audioState.muted) playTick();
   });
-
   volSlider.addEventListener("input", ()=>{
     unlockAudioOnce();
     audioState.volume = parseFloat(volSlider.value);
     saveAudioSettings();
+  });
+
+  // Settings panel
+  const settingsPanel = document.createElement("div");
+  settingsPanel.className = "panel";
+  settingsPanel.innerHTML = `
+    <div class="panelTitle">Settings</div>
+    <div class="panelBody" style="gap:10px;">
+      <label style="display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;">
+        <input id="dupToggle" type="checkbox" ${settings.dupProtect ? "checked" : ""} />
+        <span style="font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.80);">
+          Duplicate Protection
+        </span>
+      </label>
+      <div style="font-size:12px; color:rgba(255,255,255,.55); line-height:1.45;">
+        Stops repeats inside the same multi-spin.
+      </div>
+    </div>
+  `;
+  sidebar.appendChild(settingsPanel);
+
+  const dupToggle = settingsPanel.querySelector("#dupToggle");
+  dupToggle.addEventListener("change", ()=>{
+    settings.dupProtect = dupToggle.checked;
+    saveSettings();
+    setStatus(settings.dupProtect ? "Duplicate protection ON." : "Duplicate protection OFF.");
   });
 })();
 
@@ -486,7 +572,6 @@ function confettiBurst(){
   document.body.appendChild(root);
   setTimeout(()=>root.remove(), 1900);
 }
-
 function glowBurst(){
   const rollArea = document.querySelector(".rollArea") || document.body;
   rollArea.classList.add("f-hit-glow");
@@ -494,12 +579,11 @@ function glowBurst(){
 }
 
 /* =========================================================
-   Helpers / Stats
+   Helpers / stats
    ========================================================= */
 function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 function starsHTML(stars) { return "★".repeat(stars || 0); }
-
 function canonicalName(name) { return String(name || "").trim().toLowerCase(); }
 function getWeaponByName(name) {
   const key = canonicalName(name);
@@ -513,7 +597,6 @@ const DAMAGE_RANGES = {
   B: { min: 25, max: 28 },
   F: { min: 30, max: 36 }
 };
-
 function generateDamageForTier(tier) {
   const r = DAMAGE_RANGES[tier] || { min: 20, max: 30 };
   return randInt(r.min, r.max);
@@ -527,14 +610,12 @@ function classifyWeapon(name) {
   if (n.includes("switch")) return "switch";
   return "pistol";
 }
-
 const RPM_RANGES = {
   pistol: { min: 280, max: 520 },
   rifle:  { min: 600, max: 850 },
   smg:    { min: 850, max: 1100 },
   switch: { min: 1100, max: 1600 }
 };
-
 function generateRPM(name) {
   const type = classifyWeapon(name);
   const r = RPM_RANGES[type] || RPM_RANGES.pistol;
@@ -542,14 +623,12 @@ function generateRPM(name) {
   if (type === "rifle" && n.includes("binary")) return randInt(Math.max(r.min, 720), r.max);
   return randInt(r.min, r.max);
 }
-
-/* Generate stable stats */
 function ensureGeneratedStats(w) {
   if (w._damage == null) w._damage = generateDamageForTier(w.tier);
   if (w._rpm == null) w._rpm = generateRPM(w.name);
+  if (w._dps == null) w._dps = Math.round((w._damage * w._rpm / 60) * 10) / 10;
   return w;
 }
-
 const GLOBAL_MIN_DAMAGE = Math.min(...Object.values(DAMAGE_RANGES).map(x => x.min));
 const GLOBAL_MAX_DAMAGE = Math.max(...Object.values(DAMAGE_RANGES).map(x => x.max));
 function damagePct(dmg) {
@@ -562,6 +641,12 @@ function rpmPct(rpm){
   const v = Number(rpm);
   if (!Number.isFinite(v)) return 0;
   return clamp01(v / GLOBAL_MAX_RPM);
+}
+const GLOBAL_MAX_DPS = 999; // just normalize visually
+function dpsPct(dps){
+  const v = Number(dps);
+  if (!Number.isFinite(v)) return 0;
+  return clamp01(v / GLOBAL_MAX_DPS);
 }
 
 /* Load weapons.json */
@@ -581,24 +666,19 @@ function slug(n) {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
-
 function imageCandidates(name) {
   const baseSlug = slug(name);
   const baseRaw = String(name).replace(/\(B\)/g, "").replace(/\(b\)/g, "").trim();
   const dir = "./images/weapons/";
-
   const list = [
     `${dir}${baseSlug}.webp`,
     `${dir}${baseSlug}.png`,
     `${dir}${baseSlug}.webp.png`,
     `${dir}${baseSlug}.png.png`,
-
     `${dir}${baseRaw}.webp`,
     `${dir}${baseRaw}.png`,
     `${dir}${baseRaw}.webp.png`,
     `${dir}${baseRaw}.png.png`,
-
-    // known messy fallbacks
     `${dir}fn57.webp.png`,
     `${dir}fn57.webp`,
     `${dir}fn57.png`,
@@ -610,7 +690,7 @@ function imageCandidates(name) {
 }
 
 /* =========================================================
-   Damage bar in inspect modal
+   Inspect modal: damage bar
    ========================================================= */
 function ensureDamageBar() {
   if (barWrap) return;
@@ -644,7 +724,6 @@ function ensureDamageBar() {
   barMax = document.getElementById("damageBarMax");
 }
 
-/* Inspect modal open/close */
 function openInspect(anyWeaponObj) {
   ensureDamageBar();
   const real = ensureGeneratedStats(getWeaponByName(anyWeaponObj?.name) || anyWeaponObj);
@@ -656,15 +735,12 @@ function openInspect(anyWeaponObj) {
   modalTier.className = `modalTier tier-${real.tier ?? "S"}`;
   modalName.textContent = real.name ?? "Unknown";
 
-  const dmg = real._damage;
-  const rpm = real._rpm;
-
-  modalStats.textContent = `Damage: ${dmg} • Fire Rate: ${rpm} RPM`;
+  modalStats.textContent = `Damage: ${real._damage} • Fire Rate: ${real._rpm} RPM • DPS: ${real._dps}`;
   modalStars.textContent = starsHTML(real.stars || 0);
 
-  const pct = damagePct(dmg);
+  const pct = damagePct(real._damage);
   if (barFill) barFill.style.width = `${Math.round(pct * 100)}%`;
-  if (barVal) barVal.textContent = String(dmg);
+  if (barVal) barVal.textContent = String(real._damage);
   if (barMin) barMin.textContent = String(GLOBAL_MIN_DAMAGE);
   if (barMax) barMax.textContent = String(GLOBAL_MAX_DAMAGE);
 
@@ -687,13 +763,12 @@ function closeInspect() {
 }
 modalClose.addEventListener("click", closeInspect);
 modalX.addEventListener("click", closeInspect);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInspect(); });
 
 /* =========================================================
-   Compare Mode
+   Compare (3 items) + best by DPS + highlight higher stats
    ========================================================= */
 let compareMode = false;
-let comparePick = [];
+let comparePick = []; // up to 3
 
 function getCardWeaponName(cardEl){
   const nameEl = cardEl?.querySelector?.(".cardName");
@@ -707,7 +782,7 @@ function clearCompareSelection(){
 function toggleCompareMode(on){
   compareMode = !!on;
   clearCompareSelection();
-  setStatus(compareMode ? "Compare mode: tap 2 weapons to compare." : "Ready.");
+  setStatus(compareMode ? "Compare mode: tap up to 3 weapons." : "Ready.");
   updateCompareToast();
 }
 function updateCompareToast(){
@@ -715,46 +790,9 @@ function updateCompareToast(){
   if(!toast) return;
   if(!compareMode){ toast.classList.remove("show"); return; }
   toast.classList.add("show");
-  toast.querySelector("#cmpTxt").textContent = `COMPARE MODE: Pick 2 weapons (${comparePick.length}/2)`;
-  toast.querySelector("#cmpOpen").disabled = comparePick.length !== 2;
+  toast.querySelector("#cmpTxt").textContent = `COMPARE MODE: Pick up to 3 weapons (${comparePick.length}/3)`;
+  toast.querySelector("#cmpOpen").disabled = comparePick.length < 2;
   toast.querySelector("#cmpClear").disabled = comparePick.length === 0;
-}
-function openCompareModal(w1, w2){
-  const modal = document.getElementById("compareModal");
-  if(!modal) return;
-
-  const A = ensureGeneratedStats(w1);
-  const B = ensureGeneratedStats(w2);
-
-  const setPane = (prefix, w) => {
-    modal.querySelector(`#${prefix}Name`).textContent = w.name;
-    const tierEl = modal.querySelector(`#${prefix}Tier`);
-    tierEl.textContent = `Tier ${w.tier}`;
-    tierEl.className = "cmpTier tier-" + w.tier;
-
-    modal.querySelector(`#${prefix}Stats`).textContent = `Damage: ${w._damage} • RPM: ${w._rpm}`;
-
-    modal.querySelector(`#${prefix}DmgVal`).textContent = w._damage;
-    modal.querySelector(`#${prefix}RpmVal`).textContent = w._rpm;
-    modal.querySelector(`#${prefix}DmgFill`).style.width = `${Math.round(damagePct(w._damage)*100)}%`;
-    modal.querySelector(`#${prefix}RpmFill`).style.width = `${Math.round(rpmPct(w._rpm)*100)}%`;
-
-    const imgEl = modal.querySelector(`#${prefix}Img`);
-    const candidates = imageCandidates(w.name);
-    let i = 0;
-    const tryNext = () => {
-      if(i >= candidates.length){ imgEl.removeAttribute("src"); imgEl.alt="Image missing"; return; }
-      imgEl.src = candidates[i++];
-    };
-    imgEl.onerror = tryNext;
-    tryNext();
-  };
-
-  setPane("a", A);
-  setPane("b", B);
-
-  modal.classList.add("show");
-  modal.setAttribute("aria-hidden","false");
 }
 function closeCompareModal(){
   const modal = document.getElementById("compareModal");
@@ -762,6 +800,83 @@ function closeCompareModal(){
   modal.classList.remove("show");
   modal.setAttribute("aria-hidden","true");
 }
+
+function openCompareModal(list){
+  const modal = document.getElementById("compareModal");
+  if(!modal) return;
+
+  const items = list.map(ensureGeneratedStats);
+
+  const maxDmg = Math.max(...items.map(x=>x._damage));
+  const maxRpm = Math.max(...items.map(x=>x._rpm));
+  const maxDps = Math.max(...items.map(x=>x._dps));
+
+  const panes = [
+    { prefix: "a", w: items[0] || null },
+    { prefix: "b", w: items[1] || null },
+    { prefix: "c", w: items[2] || null }
+  ];
+
+  for(const p of panes){
+    const paneEl = modal.querySelector(`#pane_${p.prefix}`);
+    if(!p.w){
+      paneEl.classList.add("is-hidden");
+      continue;
+    }
+    paneEl.classList.remove("is-hidden");
+
+    modal.querySelector(`#${p.prefix}Name`).textContent = p.w.name;
+
+    const bestBadge = modal.querySelector(`#${p.prefix}Best`);
+    bestBadge.classList.toggle("show", p.w._dps === maxDps);
+
+    const tierEl = modal.querySelector(`#${p.prefix}Tier`);
+    tierEl.textContent = `Tier ${p.w.tier}`;
+    tierEl.className = "cmpTier tier-" + p.w.tier;
+
+    modal.querySelector(`#${p.prefix}Stats`).textContent =
+      `Damage: ${p.w._damage} • RPM: ${p.w._rpm} • DPS: ${p.w._dps}`;
+
+    const dmgVal = modal.querySelector(`#${p.prefix}DmgVal`);
+    const rpmVal = modal.querySelector(`#${p.prefix}RpmVal`);
+    const dpsVal = modal.querySelector(`#${p.prefix}DpsVal`);
+
+    dmgVal.textContent = p.w._damage;
+    rpmVal.textContent = p.w._rpm;
+    dpsVal.textContent = p.w._dps;
+
+    dmgVal.classList.toggle("is-best", p.w._damage === maxDmg);
+    rpmVal.classList.toggle("is-best", p.w._rpm === maxRpm);
+    dpsVal.classList.toggle("is-best", p.w._dps === maxDps);
+
+    const dmgFill = modal.querySelector(`#${p.prefix}DmgFill`);
+    const rpmFill = modal.querySelector(`#${p.prefix}RpmFill`);
+    const dpsFill = modal.querySelector(`#${p.prefix}DpsFill`);
+
+    dmgFill.style.width = `${Math.round(damagePct(p.w._damage)*100)}%`;
+    rpmFill.style.width = `${Math.round(rpmPct(p.w._rpm)*100)}%`;
+    dpsFill.style.width = `${Math.round(dpsPct(p.w._dps)*100)}%`;
+
+    dmgFill.classList.toggle("is-best", p.w._damage === maxDmg);
+    rpmFill.classList.toggle("is-best", p.w._rpm === maxRpm);
+    dpsFill.classList.toggle("is-best", p.w._dps === maxDps);
+
+    // image
+    const imgEl = modal.querySelector(`#${p.prefix}Img`);
+    const candidates = imageCandidates(p.w.name);
+    let i = 0;
+    const tryNext = () => {
+      if(i >= candidates.length){ imgEl.removeAttribute("src"); imgEl.alt="Image missing"; return; }
+      imgEl.src = candidates[i++];
+    };
+    imgEl.onerror = tryNext;
+    tryNext();
+  }
+
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden","false");
+}
+
 function ensureCompareUI(){
   if(document.getElementById("compareToast")) return;
 
@@ -778,7 +893,7 @@ function ensureCompareUI(){
   document.body.appendChild(toast);
   toast.querySelector("#cmpClear").addEventListener("click", clearCompareSelection);
   toast.querySelector("#cmpOpen").addEventListener("click", ()=>{
-    if(comparePick.length === 2) openCompareModal(comparePick[0], comparePick[1]);
+    if(comparePick.length >= 2) openCompareModal(comparePick);
   });
 
   const modal = document.createElement("div");
@@ -791,39 +906,9 @@ function ensureCompareUI(){
         <button class="compareClose" id="compareCloseBtn" aria-label="Close">✕</button>
       </div>
       <div class="compareBody">
-        <div class="comparePane">
-          <div class="cmpName" id="aName">A</div>
-          <div class="cmpTier" id="aTier">Tier</div>
-          <img class="cmpImg" id="aImg" alt="Weapon image" />
-          <div class="cmpStats" id="aStats"></div>
-          <div class="cmpBars">
-            <div class="barRow">
-              <div class="barLabel"><span>Damage</span><span id="aDmgVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="aDmgFill"></div></div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel"><span>RPM</span><span id="aRpmVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="aRpmFill"></div></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="comparePane">
-          <div class="cmpName" id="bName">B</div>
-          <div class="cmpTier" id="bTier">Tier</div>
-          <img class="cmpImg" id="bImg" alt="Weapon image" />
-          <div class="cmpStats" id="bStats"></div>
-          <div class="cmpBars">
-            <div class="barRow">
-              <div class="barLabel"><span>Damage</span><span id="bDmgVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="bDmgFill"></div></div>
-            </div>
-            <div class="barRow">
-              <div class="barLabel"><span>RPM</span><span id="bRpmVal"></span></div>
-              <div class="barTrack"><div class="barFill" id="bRpmFill"></div></div>
-            </div>
-          </div>
-        </div>
+        ${makeComparePane("a")}
+        ${makeComparePane("b")}
+        ${makeComparePane("c")}
       </div>
     </div>
   `;
@@ -831,11 +916,39 @@ function ensureCompareUI(){
 
   modal.querySelector("#compareBackdrop").addEventListener("click", closeCompareModal);
   modal.querySelector("#compareCloseBtn").addEventListener("click", closeCompareModal);
-  document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeCompareModal(); });
+
+  function makeComparePane(prefix){
+    return `
+      <div class="comparePane" id="pane_${prefix}">
+        <div class="cmpName">
+          <span id="${prefix}Name">Weapon</span>
+          <span class="bestBadge" id="${prefix}Best">Best DPS</span>
+        </div>
+        <div class="cmpTier" id="${prefix}Tier">Tier</div>
+        <img class="cmpImg" id="${prefix}Img" alt="Weapon image" />
+        <div class="cmpStats" id="${prefix}Stats"></div>
+
+        <div class="cmpBars">
+          <div class="barRow">
+            <div class="barLabel"><span>Damage</span><span id="${prefix}DmgVal"></span></div>
+            <div class="barTrack"><div class="barFill" id="${prefix}DmgFill"></div></div>
+          </div>
+          <div class="barRow">
+            <div class="barLabel"><span>RPM</span><span id="${prefix}RpmVal"></span></div>
+            <div class="barTrack"><div class="barFill" id="${prefix}RpmFill"></div></div>
+          </div>
+          <div class="barRow">
+            <div class="barLabel"><span>DPS</span><span id="${prefix}DpsVal"></span></div>
+            <div class="barTrack"><div class="barFill" id="${prefix}DpsFill"></div></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 /* =========================================================
-   Cards + marker tracking helper
+   Marker tracking helper
    ========================================================= */
 function cardUnderMarker() {
   const mask = document.querySelector(".mask");
@@ -852,6 +965,33 @@ function cardUnderMarker() {
   return best;
 }
 
+/* =========================================================
+   3D Tilt hover (desktop only)
+   ========================================================= */
+function attachTilt(cardEl){
+  const canTilt = window.matchMedia && window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  if(!canTilt || !cardEl) return;
+
+  let rect = null;
+  const onEnter = () => { rect = cardEl.getBoundingClientRect(); };
+  const onLeave = () => { cardEl.style.transform = ""; };
+  const onMove = (e) => {
+    if(!rect) rect = cardEl.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;   // 0..1
+    const y = (e.clientY - rect.top) / rect.height;   // 0..1
+    const rx = (0.5 - y) * 10; // rotateX
+    const ry = (x - 0.5) * 12; // rotateY
+    cardEl.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+  };
+
+  cardEl.addEventListener("mouseenter", onEnter);
+  cardEl.addEventListener("mouseleave", onLeave);
+  cardEl.addEventListener("mousemove", onMove);
+}
+
+/* =========================================================
+   Cards
+   ========================================================= */
 function makeCard(w) {
   ensureCompareUI();
   const real = ensureGeneratedStats(getWeaponByName(w?.name) || w);
@@ -885,6 +1025,7 @@ function makeCard(w) {
   img.onerror = tryNext;
   tryNext();
 
+  // Compare mode selection (up to 3)
   div.addEventListener("click", () => {
     if (!compareMode) return openInspect(real);
 
@@ -896,11 +1037,11 @@ function makeCard(w) {
       return;
     }
 
-    if (comparePick.length >= 2) {
+    if (comparePick.length >= 3) {
       const removed = comparePick.shift();
       document.querySelectorAll(".card.is-compare").forEach(card=>{
-        const nm = getCardWeaponName(card);
-        if (canonicalName(nm) === canonicalName(removed.name)) card.classList.remove("is-compare");
+        const nm = canonicalName(getCardWeaponName(card));
+        if (nm === canonicalName(removed.name)) card.classList.remove("is-compare");
       });
     }
 
@@ -909,6 +1050,7 @@ function makeCard(w) {
     updateCompareToast();
   });
 
+  attachTilt(div);
   return div;
 }
 
@@ -928,24 +1070,28 @@ function renderGrid(targetEl, list) {
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 /* =========================================================
-   Tier rules
+   Tier rules (ONLY add Glock19 Foregrip to Tier 1 pool)
    ========================================================= */
 function tierConfig(tierName) {
   const SA = weapons.filter(w => ["S", "A"].includes(w.tier));
   const BF = weapons.filter(w => ["B", "F"].includes(w.tier));
+  const foregrip = getWeaponByName("Glock19 Foregrip");
 
   if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
-  if (tierName === "Tier 1") return { count: 4, mode: "normal", pool: SA, visual: SA };
 
-  // T1.5: mostly BF, small SA
+  if (tierName === "Tier 1") {
+    // Tier 1 is S/A + ONLY Glock19 Foregrip (B)
+    const pool = foregrip ? SA.concat([foregrip]) : SA;
+    return { count: 4, mode: "normal", pool, visual: pool };
+  }
+
   if (tierName === "Tier 1.5") return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
-
-  // T2: ONLY BF
   if (tierName === "Tier 2") return { count: 6, mode: "normal", pool: BF, visual: BF };
-
   if (tierName === "Refill") return { count: 1, mode: "normal", pool: weapons, visual: weapons };
+
   return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 }
+
 function pickWinner(cfg) {
   if (cfg.mode === "weighted") return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
   return pickRandom(cfg.pool);
@@ -974,7 +1120,10 @@ function easingCubicBezier(p1x, p1y, p2x, p2y) {
 const EASE = easingCubicBezier(0.08, 0.85, 0.12, 1);
 
 /* =========================================================
-   CS:GO roll once (perfect ticks + marker highlight tracking)
+   Roll once:
+   - fast blur phase -> slow clear phase
+   - marker highlight tracking
+   - perfect tick timing
    ========================================================= */
 async function rollOnce(winner, visualPool) {
   const PRE = 40, POST = 12;
@@ -987,6 +1136,7 @@ async function rollOnce(winner, visualPool) {
   strip.innerHTML = "";
   roll.forEach(w => strip.appendChild(makeCard(w)));
 
+  strip.classList.remove("is-fast", "is-slow");
   strip.style.transition = "none";
   strip.style.transform = "translateX(0px)";
   strip.offsetHeight;
@@ -1000,8 +1150,7 @@ async function rollOnce(winner, visualPool) {
   const jitter = (Math.random() * 40) - 20;
   const target = Math.max(0, (winnerCenter - center) + jitter);
 
-  // tick schedule (exact crossings)
-  const stripLeft = strip.getBoundingClientRect().left; // translate 0
+  const stripLeft = strip.getBoundingClientRect().left;
   const total = target;
 
   const tickTimes = [];
@@ -1019,6 +1168,15 @@ async function rollOnce(winner, visualPool) {
   tickTimes.sort((a,b)=>a-b);
 
   const DURATION = 4600;
+
+  // Fast phase blur ON
+  strip.classList.add("is-fast");
+  setTimeout(()=>{
+    // Switch to slow phase (clear blur)
+    strip.classList.remove("is-fast");
+    strip.classList.add("is-slow");
+  }, Math.floor(DURATION * 0.62));
+
   strip.style.transition = "transform 4.6s cubic-bezier(.08,.85,.12,1)";
   strip.style.transform = `translateX(-${target}px)`;
 
@@ -1068,6 +1226,7 @@ async function rollOnce(winner, visualPool) {
   setTimeout(()=>{
     const cur = cardUnderMarker();
     if (cur) cur.classList.remove("is-under-marker");
+    strip.classList.remove("is-fast","is-slow");
   }, 900);
 }
 
@@ -1076,7 +1235,7 @@ function addDrop(w) { dropsDiv.appendChild(makeCard(w)); }
 /* =========================================================
    Section filters
    ========================================================= */
-function filterT1() { return weapons.filter(w => ["S", "A"].includes(w.tier)); }
+function filterT1() { return weapons.filter(w => ["S", "A"].includes(w.tier)).concat(getWeaponByName("Glock19 Foregrip") ? [getWeaponByName("Glock19 Foregrip")] : []); }
 function filterT15() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
 function filterT2() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
 function filterAll() { return weapons; }
@@ -1087,8 +1246,7 @@ function setActiveButton(btn) {
 }
 
 /* =========================================================
-   Filters + sort UI (tier filter + sort + dir) injected near search
-   (works even if your HTML row class differs)
+   Filter + sort
    ========================================================= */
 let currentBaseList = [];
 const state = { tierFilter: "ALL", sortBy: "TIER", sortDir: "DESC" };
@@ -1142,7 +1300,6 @@ function applySort(list){
 
   return copy;
 }
-
 function updateWeaponsGridWithFilters(){
   allWeaponsDiv.classList.add("is-switching");
   setTimeout(()=>{
@@ -1154,9 +1311,7 @@ function updateWeaponsGridWithFilters(){
     requestAnimationFrame(()=> allWeaponsDiv.classList.remove("is-switching"));
   }, 180);
 }
-
 function injectFilterSortUI(){
-  // try multiple possibilities to find the row containing your search input
   const row = searchInput?.closest?.(".row") || searchInput?.parentElement || null;
   if (!row || row.dataset.enhanced === "1") return;
   row.dataset.enhanced = "1";
@@ -1193,13 +1348,9 @@ function injectFilterSortUI(){
   dirBtn.className = "uiBtn ghost";
   dirBtn.textContent = state.sortDir === "ASC" ? "Asc ↑" : "Desc ↓";
 
-  if (searchInput) searchInput.style.minWidth = "220px";
-
-  // If search already in row, just append controls before/after it nicely
   controls.appendChild(tierSel);
   controls.appendChild(sortSel);
   controls.appendChild(dirBtn);
-
   row.appendChild(controls);
 
   tierSel.addEventListener("change", ()=>{ state.tierFilter = tierSel.value; updateWeaponsGridWithFilters(); });
@@ -1210,7 +1361,6 @@ function injectFilterSortUI(){
     updateWeaponsGridWithFilters();
   });
 }
-
 function switchSection(baseList, activeBtn){
   if (activeBtn) setActiveButton(activeBtn);
   currentBaseList = baseList;
@@ -1218,7 +1368,7 @@ function switchSection(baseList, activeBtn){
 }
 
 /* =========================================================
-   Mobile Bottom Toolbar (quick actions + compare toggle)
+   Mobile Toolbar
    ========================================================= */
 function injectMobileToolbar(){
   if(document.querySelector(".mobileToolbar")) return;
@@ -1260,16 +1410,6 @@ function injectMobileToolbar(){
 }
 
 /* =========================================================
-   Inspect modal listeners
-   ========================================================= */
-function closeAllModalsOnEsc(e){
-  if(e.key !== "Escape") return;
-  closeInspect();
-  closeCompareModal();
-}
-document.addEventListener("keydown", closeAllModalsOnEsc);
-
-/* =========================================================
    Button listeners
    ========================================================= */
 spinBtn.addEventListener("click", async () => {
@@ -1293,12 +1433,15 @@ spinBtn.addEventListener("click", async () => {
   const used = new Set();
   for (let i = 0; i < count; i++) {
     let winner = pickWinner(cfg);
-    let tries = 0;
-    while (used.has(winner.name) && tries < 25) {
-      winner = pickWinner(cfg);
-      tries++;
+
+    if (settings.dupProtect) {
+      let tries = 0;
+      while (used.has(canonicalName(winner.name)) && tries < 50) {
+        winner = pickWinner(cfg);
+        tries++;
+      }
+      used.add(canonicalName(winner.name));
     }
-    used.add(winner.name);
 
     setStatus(`Rolling ${i + 1}/${count}...`);
     await rollOnce(winner, visualPool);
@@ -1308,18 +1451,24 @@ spinBtn.addEventListener("click", async () => {
   setStatus(`Done! Dropped ${count} weapon(s) from ${tier}.`);
   spinBtn.disabled = false;
 
-  // mobile: scroll to drops after spin
   if (window.matchMedia && window.matchMedia("(max-width: 880px)").matches) {
     document.getElementById("drops")?.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 });
 
-showT1Btn.addEventListener("click", () => switchSection(filterT1(), showT1Btn));
-showT15Btn.addEventListener("click", () => switchSection(filterT15(), showT15Btn));
-showT2Btn.addEventListener("click", () => switchSection(filterT2(), showT2Btn));
-showAllBtn.addEventListener("click", () => switchSection(filterAll(), showAllBtn));
+showT1Btn?.addEventListener("click", () => switchSection(filterT1(), showT1Btn));
+showT15Btn?.addEventListener("click", () => switchSection(filterT15(), showT15Btn));
+showT2Btn?.addEventListener("click", () => switchSection(filterT2(), showT2Btn));
+showAllBtn?.addEventListener("click", () => switchSection(filterAll(), showAllBtn));
 
-searchInput.addEventListener("input", () => updateWeaponsGridWithFilters());
+searchInput?.addEventListener("input", () => updateWeaponsGridWithFilters());
+
+/* Escape closes compare + inspect */
+document.addEventListener("keydown", (e)=>{
+  if(e.key !== "Escape") return;
+  closeInspect();
+  closeCompareModal();
+});
 
 /* =========================================================
    Init
