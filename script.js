@@ -50,19 +50,12 @@ function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
       filter: blur(2.2px) saturate(1.08);
       transform: translateZ(0);
     }
-    .strip.is-slow .card{
-      filter: blur(0px);
-    }
+    .strip.is-slow .card{ filter: blur(0px); }
 
     /* 3D tilt (desktop only) */
     @media (hover:hover) and (pointer:fine){
-      .card{
-        transform-style: preserve-3d;
-        will-change: transform;
-      }
-      .card .cardImgWrap img{
-        transform: translateZ(22px);
-      }
+      .card{ transform-style: preserve-3d; will-change: transform; }
+      .card .cardImgWrap img{ transform: translateZ(22px); }
     }
 
     /* F-tier glow burst */
@@ -455,9 +448,8 @@ function playHit(tier){
    Duplicate protection toggle (saved)
    ========================================================= */
 const SETTINGS_KEY = "wc_settings_v1";
-const settings = {
-  dupProtect: true
-};
+const settings = { dupProtect: true };
+
 (function loadSettings(){
   try{
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
@@ -473,7 +465,6 @@ function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(
   const sidebar = document.querySelector(".sidebar");
   if (!sidebar) return;
 
-  // Audio panel (if you already had one, this still works; simple + safe)
   const audioPanel = document.createElement("div");
   audioPanel.className = "panel";
   audioPanel.innerHTML = `
@@ -505,7 +496,6 @@ function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(
     saveAudioSettings();
   });
 
-  // Settings panel
   const settingsPanel = document.createElement("div");
   settingsPanel.className = "panel";
   settingsPanel.innerHTML = `
@@ -642,7 +632,7 @@ function rpmPct(rpm){
   if (!Number.isFinite(v)) return 0;
   return clamp01(v / GLOBAL_MAX_RPM);
 }
-const GLOBAL_MAX_DPS = 999; // just normalize visually
+const GLOBAL_MAX_DPS = 999;
 function dpsPct(dps){
   const v = Number(dps);
   if (!Number.isFinite(v)) return 0;
@@ -765,7 +755,7 @@ modalClose.addEventListener("click", closeInspect);
 modalX.addEventListener("click", closeInspect);
 
 /* =========================================================
-   Compare (3 items) + best by DPS + highlight higher stats
+   Compare UI (your existing)
    ========================================================= */
 let compareMode = false;
 let comparePick = []; // up to 3
@@ -861,7 +851,6 @@ function openCompareModal(list){
     rpmFill.classList.toggle("is-best", p.w._rpm === maxRpm);
     dpsFill.classList.toggle("is-best", p.w._dps === maxDps);
 
-    // image
     const imgEl = modal.querySelector(`#${p.prefix}Img`);
     const candidates = imageCandidates(p.w.name);
     let i = 0;
@@ -892,9 +881,7 @@ function ensureCompareUI(){
   `;
   document.body.appendChild(toast);
   toast.querySelector("#cmpClear").addEventListener("click", clearCompareSelection);
-  toast.querySelector("#cmpOpen").addEventListener("click", ()=>{
-    if(comparePick.length >= 2) openCompareModal(comparePick);
-  });
+  toast.querySelector("#cmpOpen").addEventListener("click", ()=>{ if(comparePick.length >= 2) openCompareModal(comparePick); });
 
   const modal = document.createElement("div");
   modal.id = "compareModal";
@@ -977,10 +964,10 @@ function attachTilt(cardEl){
   const onLeave = () => { cardEl.style.transform = ""; };
   const onMove = (e) => {
     if(!rect) rect = cardEl.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;   // 0..1
-    const y = (e.clientY - rect.top) / rect.height;   // 0..1
-    const rx = (0.5 - y) * 10; // rotateX
-    const ry = (x - 0.5) * 12; // rotateY
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    const rx = (0.5 - y) * 10;
+    const ry = (x - 0.5) * 12;
     cardEl.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
   };
 
@@ -1025,7 +1012,6 @@ function makeCard(w) {
   img.onerror = tryNext;
   tryNext();
 
-  // Compare mode selection (up to 3)
   div.addEventListener("click", () => {
     if (!compareMode) return openInspect(real);
 
@@ -1070,7 +1056,8 @@ function renderGrid(targetEl, list) {
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 /* =========================================================
-   Tier rules (ONLY add Glock19 Foregrip to Tier 1 pool)
+   TIER RULES (FIXED)
+   - Tier 2 is now WEIGHTED: mostly B/F + small S/A chance
    ========================================================= */
 function tierConfig(tierName) {
   const SA = weapons.filter(w => ["S", "A"].includes(w.tier));
@@ -1080,20 +1067,30 @@ function tierConfig(tierName) {
   if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
 
   if (tierName === "Tier 1") {
-    // Tier 1 is S/A + ONLY Glock19 Foregrip (B)
     const pool = foregrip ? SA.concat([foregrip]) : SA;
     return { count: 4, mode: "normal", pool, visual: pool };
   }
 
-  if (tierName === "Tier 1.5") return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
-  if (tierName === "Tier 2") return { count: 6, mode: "normal", pool: BF, visual: BF };
+  if (tierName === "Tier 1.5") {
+    return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
+  }
+
+  // ✅ HERE is the change you wanted:
+  // Tier 2: MOSTLY B/F, but small S/A chance (12%).
+  // Visual strip stays B/F so it still looks like Tier 2.
+  if (tierName === "Tier 2") {
+    return { count: 6, mode: "weighted", SA, BF, pSA: 0.12, visual: BF };
+  }
+
   if (tierName === "Refill") return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 
   return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 }
 
 function pickWinner(cfg) {
-  if (cfg.mode === "weighted") return (Math.random() < cfg.pSA) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
+  if (cfg.mode === "weighted") {
+    return (Math.random() < (cfg.pSA ?? 0)) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
+  }
   return pickRandom(cfg.pool);
 }
 
@@ -1169,10 +1166,8 @@ async function rollOnce(winner, visualPool) {
 
   const DURATION = 4600;
 
-  // Fast phase blur ON
   strip.classList.add("is-fast");
   setTimeout(()=>{
-    // Switch to slow phase (clear blur)
     strip.classList.remove("is-fast");
     strip.classList.add("is-slow");
   }, Math.floor(DURATION * 0.62));
@@ -1235,7 +1230,11 @@ function addDrop(w) { dropsDiv.appendChild(makeCard(w)); }
 /* =========================================================
    Section filters
    ========================================================= */
-function filterT1() { return weapons.filter(w => ["S", "A"].includes(w.tier)).concat(getWeaponByName("Glock19 Foregrip") ? [getWeaponByName("Glock19 Foregrip")] : []); }
+function filterT1() {
+  const base = weapons.filter(w => ["S", "A"].includes(w.tier));
+  const fg = getWeaponByName("Glock19 Foregrip");
+  return fg ? base.concat([fg]) : base;
+}
 function filterT15() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
 function filterT2() { return weapons.filter(w => ["B", "F"].includes(w.tier)); }
 function filterAll() { return weapons; }
