@@ -1056,41 +1056,120 @@ function renderGrid(targetEl, list) {
 function pickRandom(list) { return list[Math.floor(Math.random() * list.length)]; }
 
 /* =========================================================
-   TIER RULES (FIXED)
-   - Tier 2 is now WEIGHTED: mostly B/F + small S/A chance
+   NEW: weighting rules
+   - A slightly more common than S
+   - Refill boosts Fn57
+   ========================================================= */
+const SA_WEIGHT_A = 1.25;   // A slightly more common
+const SA_WEIGHT_S = 1.00;
+
+const REFILL_BOOST_NAME = "Fn57"; // EXACT name in weapons.json
+const REFILL_BOOST_MULT = 4;      // 4x more likely
+
+function pickFromSA_withABias(SA){
+  const S = SA.filter(w => w.tier === "S");
+  const A = SA.filter(w => w.tier === "A");
+
+  if (!S.length && !A.length) return pickRandom(SA);
+  if (!S.length) return pickRandom(A);
+  if (!A.length) return pickRandom(S);
+
+  const pA = SA_WEIGHT_A / (SA_WEIGHT_A + SA_WEIGHT_S);
+  return (Math.random() < pA) ? pickRandom(A) : pickRandom(S);
+}
+
+function weightedPick(items, weightFn){
+  let total = 0;
+  const weights = items.map(it=>{
+    const w = Math.max(0, Number(weightFn(it)) || 0);
+    total += w;
+    return w;
+  });
+  if (total <= 0) return pickRandom(items);
+
+  let r = Math.random() * total;
+  for (let i=0;i<items.length;i++){
+    r -= weights[i];
+    if (r <= 0) return items[i];
+  }
+  return items[items.length-1];
+}
+
+/* =========================================================
+   TIER RULES (UPDATED)
+   - Tier 2: mostly B/F but slight S/A chance
+   - Tier 1.5: mostly B/F but slight S/A chance
+   - Tier 1: S/A + ONLY Glock19 Foregrip
+   - Refill: boosts Fn57
    ========================================================= */
 function tierConfig(tierName) {
   const SA = weapons.filter(w => ["S", "A"].includes(w.tier));
   const BF = weapons.filter(w => ["B", "F"].includes(w.tier));
   const foregrip = getWeaponByName("Glock19 Foregrip");
 
-  if (tierName === "Test Drops") return { count: 2, mode: "normal", pool: SA, visual: SA };
+  if (tierName === "Test Drops") {
+    return { count: 2, mode: "sa_bias", SA, pool: SA, visual: SA };
+  }
 
   if (tierName === "Tier 1") {
     const pool = foregrip ? SA.concat([foregrip]) : SA;
-    return { count: 4, mode: "normal", pool, visual: pool };
+    return { count: 4, mode: "tier1_pool", SA, pool, visual: pool };
   }
 
   if (tierName === "Tier 1.5") {
-    return { count: 4, mode: "weighted", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
+    // mostly BF, small SA; inside SA choose A more than S
+    return { count: 4, mode: "bf_plus_sa", SA, BF, pSA: 0.15, visual: BF.concat(SA) };
   }
 
-  // ✅ HERE is the change you wanted:
-  // Tier 2: MOSTLY B/F, but small S/A chance (12%).
-  // Visual strip stays B/F so it still looks like Tier 2.
   if (tierName === "Tier 2") {
-    return { count: 6, mode: "weighted", SA, BF, pSA: 0.12, visual: BF };
+    // mostly BF, tiny SA chance; visually show BF only
+    return { count: 6, mode: "bf_plus_sa", SA, BF, pSA: 0.12, visual: BF };
   }
 
-  if (tierName === "Refill") return { count: 1, mode: "normal", pool: weapons, visual: weapons };
+  if (tierName === "Refill") {
+    return { count: 1, mode: "refill_boost", pool: weapons, visual: weapons };
+  }
 
   return { count: 1, mode: "normal", pool: weapons, visual: weapons };
 }
 
 function pickWinner(cfg) {
-  if (cfg.mode === "weighted") {
-    return (Math.random() < (cfg.pSA ?? 0)) ? pickRandom(cfg.SA) : pickRandom(cfg.BF);
+  // S/A pools with A>S bias
+  if (cfg.mode === "sa_bias") return pickFromSA_withABias(cfg.SA || cfg.pool);
+
+  // Tier 1 special pool: mostly S/A (A>S), but can include Foregrip
+  if (cfg.mode === "tier1_pool") {
+    const fg = getWeaponByName("Glock19 Foregrip");
+    // If foregrip exists, allow it but keep it "slight"
+    if (fg && cfg.pool.some(w => canonicalName(w.name) === canonicalName(fg.name))) {
+      return weightedPick(cfg.pool, (w)=>{
+        if (canonicalName(w.name) === canonicalName(fg.name)) return 0.22; // slight chance
+        if (w.tier === "A") return SA_WEIGHT_A;
+        if (w.tier === "S") return SA_WEIGHT_S;
+        return 0; // should not happen
+      });
+    }
+    return pickFromSA_withABias(cfg.pool);
   }
+
+  // BF pools with small SA chance, and A>S inside SA
+  if (cfg.mode === "bf_plus_sa") {
+    if (Math.random() < (cfg.pSA ?? 0)) return pickFromSA_withABias(cfg.SA);
+    return pickRandom(cfg.BF);
+  }
+
+  // Refill boosts Fn57
+  if (cfg.mode === "refill_boost") {
+    return weightedPick(cfg.pool, (w)=>{
+      if (canonicalName(w.name) === canonicalName(REFILL_BOOST_NAME)) return REFILL_BOOST_MULT;
+      // ALSO: small A>S bias in refill (optional but nice)
+      if (w.tier === "A") return 1.12;
+      if (w.tier === "S") return 1.0;
+      return 1;
+    });
+  }
+
+  // Default
   return pickRandom(cfg.pool);
 }
 
@@ -1117,10 +1196,7 @@ function easingCubicBezier(p1x, p1y, p2x, p2y) {
 const EASE = easingCubicBezier(0.08, 0.85, 0.12, 1);
 
 /* =========================================================
-   Roll once:
-   - fast blur phase -> slow clear phase
-   - marker highlight tracking
-   - perfect tick timing
+   Roll once
    ========================================================= */
 async function rollOnce(winner, visualPool) {
   const PRE = 40, POST = 12;
